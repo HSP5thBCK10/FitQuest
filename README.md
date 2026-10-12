@@ -36,22 +36,33 @@ form service (e.g. Formspree) or your own backend.
 
 ---
 
-# FitTrack (fitness app)
+# FitQuest (fitness RPG app)
 
-A mobile fitness tracker in the `fitness/` folder. It's a Progressive Web App (PWA): it
-runs in your phone's browser, can be installed to the home screen like a normal app, and
-works offline.
+A video-game-style fitness tracker in the `fitness/` folder. Your workouts earn XP that
+levels up your hero. It's a Progressive Web App (PWA): it runs in your phone's browser,
+can be installed to the home screen like a normal app, and works offline.
 
-## Features
+## Classes
 
-- Log workouts: activity, duration, distance, calories, date, and notes
-- Calories are estimated automatically from the activity and your body weight
-- Weekly goal progress ring, today's totals, and your day streak
-- 7-day activity chart
-- Full history grouped by day, with delete
-- Settings for weekly goal and body weight
-- Export your data as JSON
-- Data is stored only on your device (browser storage)
+On first launch you choose a class (you can change it later in **Camp**):
+
+| Class         | Body type              | Focus                                  | Bonus                 |
+| ------------- | ---------------------- | -------------------------------------- | --------------------- |
+| **Barbarian** | Bodybuilder physique   | Heavy lifting, muscle mass             | 2× XP on Strength     |
+| **Assassin**  | Lean & athletic        | Running, HIIT, cycling, sports         | 2× XP on Agility      |
+| **Monk**      | Flexible & balanced    | Yoga, stretching, meditation           | 2× XP on Wisdom       |
+| **Warrior**   | Regular physique       | A balanced mix of everything           | 1.5× XP on all training |
+
+## How the game works
+
+- **XP:** every minute of training earns 2 XP, multiplied by your class bonus
+- **Attributes:** each activity trains STR, AGI, WIS or VIT; stats grow as you train
+- **Levels & titles:** level up as XP adds up, unlocking class titles
+  (e.g. Barbarian: Wildling → Brute → Raider → Berserker → … → Godslayer)
+- **Daily quest:** a class-specific challenge each day for bonus XP
+- Streaks, weekly goal, 7-day chart, calorie estimates, and a full workout journal
+- Deleting a workout removes its XP (and the quest bonus, if it no longer qualifies)
+- Data is stored only on your device; export it from **Camp**
 
 ## Running it
 
@@ -75,12 +86,12 @@ The app must be served over HTTPS to install. The easiest free option is GitHub 
 
 | File               | Purpose                                     |
 | ------------------ | ------------------------------------------- |
-| `index.html`       | Screens: Today, Log, History, Settings      |
-| `app.css`          | Mobile-first styles, automatic dark mode    |
-| `app.js`           | Workout logic, stats, charts, storage       |
+| `index.html`       | Screens: Hero, Train, Journal, Camp, class picker |
+| `app.css`          | Pixel/retro game styling                    |
+| `app.js`           | Classes, XP, quests, pixel sprites, storage |
 | `sw.js`            | Service worker for offline use              |
 | `manifest.json`    | Makes the app installable                   |
-| `icons/`           | App icons                                   |
+| `icons/`, `fonts/` | App icons and the Press Start 2P pixel font (OFL) |
 
-When you change app files, bump `CACHE` in `sw.js` (e.g. `fittrack-v2`) so installed
+When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v3`) so installed
 copies pick up the update.

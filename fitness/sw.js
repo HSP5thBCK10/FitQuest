@@ -1,11 +1,12 @@
 // Bump this version whenever app files change so users get the update
-const CACHE = "fittrack-v1";
+const CACHE = "fitquest-v2";
 const ASSETS = [
   "./",
   "index.html",
   "app.css",
   "app.js",
   "manifest.json",
+  "fonts/press-start-2p.woff2",
   "icons/icon.svg",
   "icons/icon-192.png",
   "icons/icon-512.png",

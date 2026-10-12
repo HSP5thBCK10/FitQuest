@@ -3,66 +3,86 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#4f46e5">
-  <meta name="description" content="Track your workouts, goals, and streaks">
+  <meta name="theme-color" content="#0d0b1e">
+  <meta name="description" content="Level up your real-life hero by working out">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>FitTrack</title>
+  <title>FitQuest</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="preload" href="fonts/press-start-2p.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
   <header class="app-header">
-    <h1 id="screen-title">Today</h1>
+    <h1 id="screen-title" class="pixel">Hero</h1>
+    <span class="header-level pixel" id="header-level"></span>
   </header>
 
   <main>
-    <!-- Today -->
-    <section id="today" class="screen active" data-title="Today">
-      <div class="card goal-card">
-        <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
-          <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
-          <circle class="ring-fg" id="goal-ring" cx="60" cy="60" r="52"></circle>
-        </svg>
-        <div class="goal-text">
-          <span class="goal-value" id="week-minutes">0</span>
-          <span class="goal-label">of <span id="week-goal">150</span> min this week</span>
+    <!-- Hero -->
+    <section id="hero" class="screen active" data-title="Hero">
+      <div class="panel hero-card">
+        <div class="portrait" id="hero-portrait"></div>
+        <div class="hero-info">
+          <div class="hero-name pixel" id="hero-name-display"></div>
+          <div class="hero-title" id="hero-title"></div>
+          <div class="xp-label pixel"><span>LV <span id="hero-level">1</span></span><span id="xp-text">0 / 100 XP</span></div>
+          <div class="bar xp-bar"><div class="bar-fill" id="xp-fill"></div></div>
         </div>
+      </div>
+
+      <div class="panel quest-card" id="quest-card">
+        <div class="quest-header pixel"><span>&#128220; Daily Quest</span><span class="quest-reward" id="quest-reward"></span></div>
+        <div class="quest-name pixel" id="quest-name"></div>
+        <div class="quest-desc" id="quest-desc"></div>
+        <div class="bar quest-bar"><div class="bar-fill" id="quest-fill"></div></div>
+        <div class="quest-progress" id="quest-progress"></div>
       </div>
 
       <div class="stats">
-        <div class="stat card">
-          <span class="stat-value" id="today-minutes">0</span>
+        <div class="stat panel">
+          <span class="stat-value pixel" id="today-minutes">0</span>
           <span class="stat-label">min today</span>
         </div>
-        <div class="stat card">
-          <span class="stat-value" id="today-calories">0</span>
+        <div class="stat panel">
+          <span class="stat-value pixel" id="today-calories">0</span>
           <span class="stat-label">kcal today</span>
         </div>
-        <div class="stat card">
-          <span class="stat-value" id="streak">0</span>
-          <span class="stat-label">day streak</span>
+        <div class="stat panel">
+          <span class="stat-value pixel" id="streak">0</span>
+          <span class="stat-label">&#128293; day streak</span>
         </div>
       </div>
 
-      <div class="card">
-        <h2>Last 7 days</h2>
+      <div class="panel">
+        <h2 class="pixel">Attributes</h2>
+        <div class="attributes" id="attributes"></div>
+      </div>
+
+      <div class="panel">
+        <h2 class="pixel">Weekly Goal</h2>
+        <div class="xp-label"><span id="week-text">0 / 150 min</span><span id="week-pct">0%</span></div>
+        <div class="bar week-bar"><div class="bar-fill" id="week-fill"></div></div>
+      </div>
+
+      <div class="panel">
+        <h2 class="pixel">Last 7 Days</h2>
         <div class="chart" id="week-chart"></div>
       </div>
 
-      <div class="card">
-        <h2>Today's workouts</h2>
+      <div class="panel">
+        <h2 class="pixel">Today's Battles</h2>
         <ul class="workout-list" id="today-list"></ul>
       </div>
     </section>
 
-    <!-- Log -->
-    <section id="log" class="screen" data-title="Log Workout">
-      <form id="workout-form" class="card form" novalidate>
-        <label for="type">Activity</label>
-        <select id="type" name="type" required></select>
+    <!-- Train -->
+    <section id="train" class="screen" data-title="Train">
+      <form id="workout-form" class="panel form" novalidate>
+        <label>Choose your training</label>
+        <div class="activity-grid" id="activity-grid" role="radiogroup" aria-label="Activity"></div>
 
         <div class="row">
           <div>
@@ -87,23 +107,30 @@
         </div>
 
         <label for="notes">Notes</label>
-        <textarea id="notes" name="notes" rows="3" placeholder="How did it feel?"></textarea>
+        <textarea id="notes" name="notes" rows="2" placeholder="How did the battle go?"></textarea>
 
-        <p class="hint" id="calorie-hint"></p>
-        <button type="submit" class="btn">Save Workout</button>
+        <div class="reward-preview pixel" id="reward-preview"></div>
+        <button type="submit" class="btn pixel">Complete Training</button>
         <p class="form-status" id="form-status" role="status"></p>
       </form>
     </section>
 
-    <!-- History -->
-    <section id="history" class="screen" data-title="History">
-      <div class="card totals" id="all-time"></div>
+    <!-- Journal -->
+    <section id="journal" class="screen" data-title="Journal">
+      <div class="panel totals" id="all-time"></div>
       <div id="history-list"></div>
     </section>
 
     <!-- Settings -->
-    <section id="settings" class="screen" data-title="Settings">
-      <form id="settings-form" class="card form">
+    <section id="settings" class="screen" data-title="Camp">
+      <div class="panel form">
+        <h2 class="pixel">Your Hero</h2>
+        <div class="current-class" id="current-class"></div>
+        <button type="button" class="btn secondary pixel" id="change-class-btn">Change Class</button>
+      </div>
+
+      <form id="settings-form" class="panel form">
+        <h2 class="pixel">Settings</h2>
         <label for="goal">Weekly goal (minutes)</label>
         <input type="number" id="goal" min="10" max="5000" inputmode="numeric">
 
@@ -111,25 +138,53 @@
         <input type="number" id="weight" min="20" max="300" step="0.1" inputmode="decimal">
         <p class="hint">Used to estimate calories burned.</p>
 
-        <button type="submit" class="btn">Save Settings</button>
+        <button type="submit" class="btn pixel">Save</button>
         <p class="form-status" id="settings-status" role="status"></p>
       </form>
 
-      <div class="card form">
-        <h2>Your data</h2>
+      <div class="panel form">
+        <h2 class="pixel">Save Data</h2>
         <p class="hint">Everything is stored only on this device.</p>
-        <button type="button" class="btn secondary" id="export-btn">Export as JSON</button>
-        <button type="button" class="btn danger" id="clear-btn">Delete all workouts</button>
+        <button type="button" class="btn secondary pixel" id="export-btn">Export Save</button>
+        <button type="button" class="btn danger pixel" id="clear-btn">Delete All Progress</button>
       </div>
     </section>
   </main>
 
   <nav class="tab-bar" aria-label="Main">
-    <button class="tab active" data-screen="today"><span class="tab-icon">&#9673;</span>Today</button>
-    <button class="tab" data-screen="log"><span class="tab-icon">&#65291;</span>Log</button>
-    <button class="tab" data-screen="history"><span class="tab-icon">&#9776;</span>History</button>
-    <button class="tab" data-screen="settings"><span class="tab-icon">&#9881;</span>Settings</button>
+    <button class="tab active" data-screen="hero"><span class="tab-icon">&#128737;&#xFE0F;</span>Hero</button>
+    <button class="tab" data-screen="train"><span class="tab-icon">&#9876;&#xFE0F;</span>Train</button>
+    <button class="tab" data-screen="journal"><span class="tab-icon">&#128220;</span>Journal</button>
+    <button class="tab" data-screen="settings"><span class="tab-icon">&#9978;&#xFE0F;</span>Camp</button>
   </nav>
+
+  <!-- Class selection (shown on first launch, or from Camp) -->
+  <div class="overlay" id="class-select" hidden>
+    <div class="overlay-inner">
+      <h1 class="pixel overlay-title" id="class-select-title">Choose Your Class</h1>
+      <p class="overlay-sub">Your class shapes your training path and which workouts earn bonus XP.</p>
+      <div class="class-grid" id="class-grid" role="radiogroup" aria-label="Class"></div>
+      <div class="panel class-detail" id="class-detail">
+        <p class="hint">Tap a class to learn more.</p>
+      </div>
+      <label for="hero-name" class="name-label">Hero name</label>
+      <input type="text" id="hero-name" maxlength="20" placeholder="Enter your name" autocomplete="nickname">
+      <button type="button" class="btn pixel" id="begin-btn" disabled>Begin Adventure</button>
+      <button type="button" class="btn secondary pixel" id="cancel-class-btn" hidden>Cancel</button>
+    </div>
+  </div>
+
+  <!-- Level up / quest complete popup -->
+  <div class="overlay popup" id="popup" hidden>
+    <div class="popup-box panel">
+      <div class="popup-icon" id="popup-icon"></div>
+      <div class="popup-title pixel" id="popup-title"></div>
+      <div class="popup-text" id="popup-text"></div>
+      <button type="button" class="btn pixel" id="popup-btn">Onward!</button>
+    </div>
+  </div>
+
+  <div class="toast pixel" id="toast" aria-live="polite"></div>
 
   <script src="app.js"></script>
 </body>
