@@ -62,6 +62,18 @@ On first launch you choose a class (you can change it later in **Camp**):
 - **Daily quest:** a class-specific challenge each day for bonus XP
 - Streaks, weekly goal, 7-day chart, calorie estimates, and a full workout journal
 - Deleting a workout removes its XP (and the quest bonus, if it no longer qualifies)
+
+## Loot: gear & badges
+
+- **23 achievement badges**: workout milestones (1/10/50/100), streaks (3/7/30 days),
+  distance (5K, 10K, marathon total), quests, levels, attribute mastery and more.
+  Locked badges show your progress toward them.
+- **16 pieces of unlockable gear** in 4 slots: headgear, capes, companion pets and
+  auras. Unlock them by leveling up or earning badges, and equip them in **Loot**:
+  they appear on your pixel hero. Top-tier items give a permanent +5% XP bonus each
+  (applies to new workouts).
+- Popups announce new badges and gear when you earn them. Deleting workouts can take
+  them away again.
 - Data is stored only on your device; export it from **Camp**
 
 ## Running it
@@ -86,12 +98,12 @@ The app must be served over HTTPS to install. The easiest free option is GitHub 
 
 | File               | Purpose                                     |
 | ------------------ | ------------------------------------------- |
-| `index.html`       | Screens: Hero, Train, Journal, Camp, class picker |
+| `index.html`       | Screens: Hero, Train, Loot, Journal, Camp, class picker |
 | `app.css`          | Pixel/retro game styling                    |
-| `app.js`           | Classes, XP, quests, pixel sprites, storage |
+| `app.js`           | Classes, XP, quests, badges, gear, pixel sprites, storage |
 | `sw.js`            | Service worker for offline use              |
 | `manifest.json`    | Makes the app installable                   |
 | `icons/`, `fonts/` | App icons and the Press Start 2P pixel font (OFL) |
 
-When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v3`) so installed
+When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v4`) so installed
 copies pick up the update.

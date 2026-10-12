@@ -189,27 +189,169 @@ const SPRITE_COLORS = {
   B: "#1d4ed8",
 };
 
-function spriteSvg(cls, label) {
-  const rows = SPRITES[cls];
+// Turns rows of letters into SVG pixels, offset by (dx, dy)
+function pixels(rows, colors, dx = 0, dy = 0) {
   let rects = "";
   rows.forEach((row, y) => {
     [...row].forEach((ch, x) => {
-      if (ch === ".") return;
-      let color = SPRITE_COLORS[ch];
-      // The warrior's tunic is class blue rather than brown leather
-      if (cls === "warrior" && ch === "b") color = "#3b82f6";
-      rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${color}"/>`;
+      if (ch === "." || !colors[ch]) return;
+      rects += `<rect x="${x + dx}" y="${y + dy}" width="1" height="1" fill="${colors[ch]}"/>`;
     });
   });
+  return rects;
+}
+
+function spriteColors(cls) {
+  // The warrior's tunic is class blue rather than brown leather
+  return cls === "warrior" ? { ...SPRITE_COLORS, b: "#3b82f6" } : SPRITE_COLORS;
+}
+
+function spriteSvg(cls, label) {
+  const rects = pixels(SPRITES[cls], spriteColors(cls));
   return `<svg class="sprite" viewBox="0 0 16 16" role="img" aria-label="${label}">${rects}</svg>`;
 }
+
+// ---------- Gear ----------
+
+// Where gear attaches on each class sprite (in sprite coordinates)
+const ANCHORS = {
+  barbarian: { headTop: 1, shoulders: 8 },
+  assassin: { headTop: 0, shoulders: 6 },
+  monk: { headTop: 1, shoulders: 6 },
+  warrior: { headTop: 0, shoulders: 6 },
+};
+
+// Unlock rules: { level } or { badge }. xp = permanent % bonus on new workouts.
+const GEAR = [
+  // Head: drawn on top of the head
+  { id: "leaf_circlet", slot: "head", name: "Leaf Circlet", unlock: { level: 3 },
+    art: [".g..g.", "gGgGgG"], colors: { g: "#4ade80", G: "#15803d" } },
+  { id: "iron_crown", slot: "head", name: "Iron Crown", unlock: { level: 6 },
+    art: ["m.mm.m", "mmmmmm"], colors: { m: "#cbd5e1" } },
+  { id: "gold_crown", slot: "head", name: "Golden Crown", unlock: { level: 12 }, xp: 5,
+    art: ["y.yy.y", "yryyry"], colors: { y: "#facc15", r: "#dc2626" } },
+  { id: "halo", slot: "head", name: "Halo of Quests", unlock: { badge: "quests25" },
+    art: [".yyyy.", "y....y"], colors: { y: "#fef08a" } },
+
+  // Back: a cape drawn behind the hero
+  { id: "travel_cloak", slot: "back", name: "Traveler's Cloak", unlock: { level: 2 },
+    colors: { c: "#78350f", h: "#451a03" } },
+  { id: "crimson_cape", slot: "back", name: "Crimson Cape", unlock: { level: 5 },
+    colors: { c: "#dc2626", h: "#7f1d1d" } },
+  { id: "shadow_cape", slot: "back", name: "Shadow Cape", unlock: { badge: "streak7" },
+    colors: { c: "#312e81", h: "#0f0a2e" } },
+  { id: "royal_cape", slot: "back", name: "Royal Cape", unlock: { level: 10 }, xp: 5,
+    colors: { c: "#7e22ce", h: "#facc15" } },
+
+  // Companion: a pet at the hero's feet
+  { id: "slime", slot: "pet", name: "Slime", unlock: { level: 4 },
+    art: [".ggg.", "ggggg", "gkgkg", "ggggg"], colors: { g: "#4ade80", k: "#052e16" } },
+  { id: "cat", slot: "pet", name: "Tabby Cat", unlock: { badge: "streak3" },
+    art: ["o...o", "ooooo", "okoko", "ooooo"], colors: { o: "#fb923c", k: "#111827" } },
+  { id: "owl", slot: "pet", name: "Wise Owl", unlock: { badge: "trained10" },
+    art: [".bbb.", "bwbwb", "bbybb", ".b.b."], colors: { b: "#a16207", w: "#fef9c3", y: "#f97316" } },
+  { id: "dragon", slot: "pet", name: "Baby Dragon", unlock: { level: 15 }, xp: 5,
+    art: ["r.r..", "rrrr.", "ykrrr", ".r.rr"], colors: { r: "#dc2626", k: "#111827", y: "#facc15" } },
+
+  // Aura: a pixel glow behind the hero
+  { id: "ember_aura", slot: "aura", name: "Ember Aura", unlock: { level: 7 },
+    tones: ["#7c2d12", "#c2410c", "#f97316"] },
+  { id: "frost_aura", slot: "aura", name: "Frost Aura", unlock: { badge: "marathon" },
+    tones: ["#164e63", "#0e7490", "#22d3ee"] },
+  { id: "void_aura", slot: "aura", name: "Void Aura", unlock: { level: 20 },
+    tones: ["#2e1065", "#5b21b6", "#a78bfa"] },
+  { id: "golden_aura", slot: "aura", name: "Golden Aura", unlock: { badge: "trained100" }, xp: 5,
+    tones: ["#713f12", "#a16207", "#facc15"] },
+];
+
+const SLOTS = {
+  head: "Headgear",
+  back: "Cape",
+  pet: "Companion",
+  aura: "Aura",
+};
+
+const gearById = (id) => GEAR.find((g) => g.id === id);
+
+// Hero sprite on a 20x20 canvas with room around it for gear
+function heroSvg(cls, gear = {}, label = "Your hero") {
+  const OX = 2;
+  const OY = 2;
+  const anchor = ANCHORS[cls];
+  let rects = "";
+
+  const aura = gearById(gear.aura);
+  if (aura) {
+    for (let y = 0; y < 20; y++) {
+      for (let x = 0; x < 20; x++) {
+        const d = Math.hypot(x - 9.5, y - 10);
+        const tone = d < 5 ? 2 : d < 7.5 ? 1 : d < 10 ? 0 : -1;
+        if (tone >= 0) rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${aura.tones[tone]}"/>`;
+      }
+    }
+  }
+
+  const cape = gearById(gear.back);
+  if (cape) {
+    const top = anchor.shoulders + OY;
+    for (let y = top; y < 20; y++) {
+      const flare = Math.min(Math.floor((y - top) / 3), 2);
+      for (let x = 6 - flare; x <= 13 + flare; x++) {
+        const color = y >= 18 ? cape.colors.h : cape.colors.c;
+        rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${color}"/>`;
+      }
+    }
+  }
+
+  rects += pixels(SPRITES[cls], spriteColors(cls), OX, OY);
+
+  const head = gearById(gear.head);
+  if (head) rects += pixels(head.art, head.colors, 7, anchor.headTop + OY - 2);
+
+  const pet = gearById(gear.pet);
+  if (pet) rects += pixels(pet.art, pet.colors, 15, 16);
+
+  return `<svg class="sprite" viewBox="0 0 20 20" role="img" aria-label="${label}">${rects}</svg>`;
+}
+
+// ---------- Badges ----------
+
+// Each check returns [current, target] so locked badges can show progress
+const BADGES = [
+  { id: "first", icon: "🩸", name: "First Blood", desc: "Complete your first workout", check: (c) => [c.count, 1] },
+  { id: "trained10", icon: "🎒", name: "Adventurer", desc: "Complete 10 workouts", check: (c) => [c.count, 10] },
+  { id: "trained50", icon: "🎖️", name: "Veteran", desc: "Complete 50 workouts", check: (c) => [c.count, 50] },
+  { id: "trained100", icon: "🏛️", name: "Centurion", desc: "Complete 100 workouts", check: (c) => [c.count, 100] },
+  { id: "streak3", icon: "🔥", name: "On Fire", desc: "Train 3 days in a row", check: (c) => [c.longestStreak, 3] },
+  { id: "streak7", icon: "⚡", name: "Unstoppable", desc: "Train 7 days in a row", check: (c) => [c.longestStreak, 7] },
+  { id: "streak30", icon: "⛓️", name: "Iron Habit", desc: "Train 30 days in a row", check: (c) => [c.longestStreak, 30] },
+  { id: "hour", icon: "⏳", name: "Endurance", desc: "Train 60 minutes in one session", check: (c) => [c.maxDuration, 60] },
+  { id: "km5", icon: "👟", name: "First 5K", desc: "Cover 5 km in one workout", check: (c) => [c.maxKm, 5] },
+  { id: "km10", icon: "🏅", name: "10K Club", desc: "Cover 10 km in one workout", check: (c) => [c.maxKm, 10] },
+  { id: "marathon", icon: "🗺️", name: "Marathoner", desc: "Cover 42.2 km in total", check: (c) => [c.totalKm, 42.2] },
+  { id: "goal", icon: "🎯", name: "Goal Crusher", desc: "Hit your weekly goal", check: (c) => [c.bestWeek, c.goal] },
+  { id: "quests5", icon: "📜", name: "Quest Hunter", desc: "Complete 5 daily quests", check: (c) => [c.quests, 5] },
+  { id: "quests25", icon: "🏆", name: "Questmaster", desc: "Complete 25 daily quests", check: (c) => [c.quests, 25] },
+  { id: "allstats", icon: "🃏", name: "Jack of All Trades", desc: "Train all four attributes", check: (c) => [c.statsTrained, 4] },
+  { id: "explorer", icon: "🧭", name: "Explorer", desc: "Try 6 different activities", check: (c) => [c.activityTypes, 6] },
+  { id: "str", icon: "💪", name: "Iron Body", desc: "Train Strength for 10 hours", check: (c) => [c.statMinutes.STR, 600] },
+  { id: "agi", icon: "💨", name: "Wind Runner", desc: "Train Agility for 10 hours", check: (c) => [c.statMinutes.AGI, 600] },
+  { id: "wis", icon: "🕯️", name: "Inner Calm", desc: "Train Wisdom for 10 hours", check: (c) => [c.statMinutes.WIS, 600] },
+  { id: "vit", icon: "🌲", name: "Trailblazer", desc: "Train Vitality for 10 hours", check: (c) => [c.statMinutes.VIT, 600] },
+  { id: "lvl5", icon: "⭐", name: "Rising Hero", desc: "Reach level 5", check: (c) => [c.level, 5] },
+  { id: "lvl10", icon: "🌟", name: "Champion", desc: "Reach level 10", check: (c) => [c.level, 10] },
+  { id: "lvl20", icon: "💫", name: "Legend", desc: "Reach level 20", check: (c) => [c.level, 20] },
+];
+
+const badgeById = (id) => BADGES.find((b) => b.id === id);
 
 // ---------- Storage ----------
 
 const STORAGE_KEY = "fittrack.workouts";
 const SETTINGS_KEY = "fittrack.settings";
 const QUESTS_KEY = "fittrack.quests";
-const DEFAULT_SETTINGS = { goal: 150, weight: 70, cls: null, heroName: "" };
+const UNLOCKS_KEY = "fittrack.unlocks";
+const DEFAULT_SETTINGS = { goal: 150, weight: 70, cls: null, heroName: "", gear: {} };
 
 function load(key, fallback) {
   try {
@@ -232,6 +374,8 @@ let workouts = load(STORAGE_KEY, []);
 let settings = { ...DEFAULT_SETTINGS, ...load(SETTINGS_KEY, {}) };
 // Completed daily quests: { date, id, xp }
 let questAwards = load(QUESTS_KEY, []);
+// Badges and gear the player has already been told about
+let seen = { badges: [], gear: [], ...load(UNLOCKS_KEY, {}) };
 
 function persist() {
   save(STORAGE_KEY, workouts);
@@ -289,9 +433,13 @@ function multiplier(cls, stat) {
   return (CLASSES[cls] && CLASSES[cls].bonus[stat]) || 1;
 }
 
-function workoutXp(type, minutes, cls) {
+function gearBonus() {
+  return Object.values(settings.gear).reduce((total, id) => total + ((gearById(id) || {}).xp || 0), 0);
+}
+
+function workoutXp(type, minutes, cls, bonusPct = gearBonus()) {
   const stat = (ACTIVITIES[type] || ACTIVITIES.other).stat;
-  return Math.round(minutes * XP_PER_MINUTE * multiplier(cls, stat));
+  return Math.round(minutes * XP_PER_MINUTE * multiplier(cls, stat) * (1 + bonusPct / 100));
 }
 
 function estimateCalories(type, minutes) {
@@ -380,6 +528,88 @@ function syncQuest(key) {
   return null;
 }
 
+function longestStreak() {
+  const days = [...new Set(workouts.map((w) => w.date))].sort();
+  let best = 0;
+  let run = 0;
+  let prev = null;
+  for (const key of days) {
+    run = prev && toKey(addDays(fromKey(prev), 1)) === key ? run + 1 : 1;
+    best = Math.max(best, run);
+    prev = key;
+  }
+  return best;
+}
+
+function badgeContext() {
+  const statMinutes = {};
+  for (const stat of Object.keys(STATS)) {
+    statMinutes[stat] = sumBy(workouts.filter((w) => activityOf(w).stat === stat), "duration");
+  }
+  const weeks = {};
+  for (const w of workouts) {
+    const week = toKey(startOfWeek(fromKey(w.date)));
+    weeks[week] = (weeks[week] || 0) + w.duration;
+  }
+  return {
+    count: workouts.length,
+    longestStreak: longestStreak(),
+    maxDuration: Math.max(0, ...workouts.map((w) => w.duration)),
+    maxKm: Math.max(0, ...workouts.map((w) => w.distance || 0)),
+    totalKm: Math.round(sumBy(workouts, "distance") * 10) / 10,
+    bestWeek: Math.max(0, ...Object.values(weeks)),
+    goal: settings.goal,
+    quests: questAwards.length,
+    statsTrained: Object.values(statMinutes).filter((m) => m > 0).length,
+    activityTypes: new Set(workouts.map((w) => w.type)).size,
+    statMinutes,
+    level: levelInfo(totalXp()).level,
+  };
+}
+
+function badgeStatus() {
+  const ctx = badgeContext();
+  return BADGES.map((b) => {
+    const [cur, target] = b.check(ctx);
+    return { ...b, cur: Math.min(cur, target), target, earned: cur >= target };
+  });
+}
+
+function unlockedGear(badges = badgeStatus()) {
+  const earned = new Set(badges.filter((b) => b.earned).map((b) => b.id));
+  const level = levelInfo(totalXp()).level;
+  return GEAR.filter((g) => (g.unlock.level ? level >= g.unlock.level : earned.has(g.unlock.badge)));
+}
+
+function unlockText(g) {
+  return g.unlock.level ? `Reach LV ${g.unlock.level}` : `Earn "${badgeById(g.unlock.badge).name}"`;
+}
+
+// Compares what is unlocked now with what the player has seen. Gear that is
+// no longer unlocked (e.g. after deleting workouts) is unequipped.
+// Returns newly unlocked badges and gear.
+function syncUnlocks() {
+  const status = badgeStatus();
+  const badges = status.filter((b) => b.earned);
+  const gear = unlockedGear(status);
+  const fresh = {
+    badges: badges.filter((b) => !seen.badges.includes(b.id)),
+    gear: gear.filter((g) => !seen.gear.includes(g.id)),
+  };
+  seen = { badges: badges.map((b) => b.id), gear: gear.map((g) => g.id) };
+  save(UNLOCKS_KEY, seen);
+
+  let unequipped = false;
+  for (const [slot, id] of Object.entries(settings.gear)) {
+    if (id && !seen.gear.includes(id)) {
+      delete settings.gear[slot];
+      unequipped = true;
+    }
+  }
+  if (unequipped) save(SETTINGS_KEY, settings);
+  return fresh;
+}
+
 // ---------- Rendering ----------
 
 const $ = (id) => document.getElementById(id);
@@ -420,7 +650,7 @@ function renderHero() {
 
   // Character card
   const info = levelInfo(totalXp());
-  $("hero-portrait").innerHTML = spriteSvg(settings.cls, cls.name);
+  $("hero-portrait").innerHTML = heroSvg(settings.cls, settings.gear, cls.name);
   $("hero-name-display").textContent = settings.heroName || "Hero";
   $("hero-title").textContent = `${titleFor(settings.cls, info.level)} · ${cls.name}`;
   $("hero-level").textContent = info.level;
@@ -533,7 +763,7 @@ function renderSettings() {
   const cls = CLASSES[settings.cls];
   const level = levelInfo(totalXp()).level;
   $("current-class").innerHTML = `
-    <div class="portrait">${spriteSvg(settings.cls, cls.name)}</div>
+    <div class="portrait">${heroSvg(settings.cls, settings.gear, cls.name)}</div>
     <div>
       <div class="pixel" style="font-size:0.7rem;margin-bottom:6px">${escapeHtml(settings.heroName || "Hero")}</div>
       <div style="color:var(--accent);font-weight:700">${cls.name} · ${titleFor(settings.cls, level)}</div>
@@ -563,12 +793,65 @@ function renderActivities() {
     .join("");
 }
 
+function renderLoot() {
+  const cls = CLASSES[settings.cls];
+  const status = badgeStatus();
+  const unlocked = new Set(unlockedGear(status).map((g) => g.id));
+  const bonus = gearBonus();
+
+  $("loot-portrait").innerHTML = heroSvg(settings.cls, settings.gear, cls.name);
+  $("loot-name").textContent = settings.heroName || "Hero";
+  $("loot-bonus").textContent = bonus ? `Gear bonus: +${bonus}% XP` : "Equip gear to customize your hero";
+  $("gear-count").textContent = `${unlocked.size} / ${GEAR.length}`;
+
+  $("gear-slots").innerHTML = Object.entries(SLOTS)
+    .map(([slot, label]) => {
+      const tiles = GEAR.filter((g) => g.slot === slot)
+        .map((g) => {
+          const isUnlocked = unlocked.has(g.id);
+          const equipped = settings.gear[slot] === g.id;
+          const state = equipped ? "Equipped" : isUnlocked ? "Tap to equip" : unlockText(g);
+          return `
+            <button type="button" class="gear ${isUnlocked ? "" : "locked"} ${equipped ? "equipped" : ""}"
+              data-gear="${g.id}" ${isUnlocked ? "" : "disabled"} aria-pressed="${equipped}">
+              ${g.xp ? `<span class="badge">+${g.xp}% XP</span>` : ""}
+              <span class="gear-preview">${heroSvg(settings.cls, { [slot]: g.id }, g.name)}</span>
+              <span class="gear-name">${isUnlocked ? "" : "🔒 "}${g.name}</span>
+              <span class="gear-state">${state}</span>
+            </button>`;
+        })
+        .join("");
+      return `<h3 class="slot-title pixel">${label}</h3><div class="gear-grid">${tiles}</div>`;
+    })
+    .join("");
+
+  const earned = status.filter((b) => b.earned).length;
+  $("badge-count").textContent = `${earned} / ${BADGES.length}`;
+  $("badge-grid").innerHTML = status
+    .map((b) => {
+      const target = Number.isInteger(b.target) ? b.target : b.target.toFixed(1);
+      const cur = Number.isInteger(b.cur) ? b.cur : b.cur.toFixed(1);
+      return `
+        <div class="achievement ${b.earned ? "earned" : ""}">
+          <span class="achievement-icon" aria-hidden="true">${b.icon}</span>
+          <span class="achievement-name">${b.name}</span>
+          <span class="achievement-desc">${b.desc}</span>
+          ${b.earned
+            ? `<span class="achievement-state pixel">Earned</span>`
+            : `<div class="bar mini-bar"><div class="bar-fill" style="width:${(b.cur / b.target) * 100}%"></div></div>
+               <span class="achievement-state">${cur} / ${target}</span>`}
+        </div>`;
+    })
+    .join("");
+}
+
 function render() {
   if (!settings.cls) return;
   applyTheme();
   renderHero();
   renderJournal();
   renderSettings();
+  renderLoot();
 }
 
 // ---------- Feedback ----------
@@ -765,6 +1048,7 @@ form.addEventListener("submit", (event) => {
   });
   const completed = syncQuest(form.date.value);
   persist();
+  const unlocks = syncUnlocks();
   render();
   resetForm();
   status.textContent = "";
@@ -779,11 +1063,34 @@ form.addEventListener("submit", (event) => {
     const newTitle = titleFor(settings.cls, levelAfter);
     const titleChanged = newTitle !== titleFor(settings.cls, levelBefore);
     popup(
-      spriteSvg(settings.cls, CLASSES[settings.cls].name),
+      heroSvg(settings.cls, settings.gear, CLASSES[settings.cls].name),
       `Level Up! LV ${levelAfter}`,
       titleChanged ? `New title unlocked: ${newTitle}!` : "Your power grows. Keep training!"
     );
   }
+  for (const b of unlocks.badges) {
+    popup(b.icon, "Badge Earned!", `${b.name}: ${b.desc}`);
+  }
+  for (const g of unlocks.gear) {
+    popup(
+      heroSvg(settings.cls, { [g.slot]: g.id }, g.name),
+      "New Gear!",
+      `${g.name} unlocked${g.xp ? ` (+${g.xp}% XP)` : ""}. Equip it in Loot.`
+    );
+  }
+});
+
+// ---------- Loot ----------
+
+$("gear-slots").addEventListener("click", (event) => {
+  const tile = event.target.closest(".gear");
+  if (!tile || tile.disabled) return;
+  const g = gearById(tile.dataset.gear);
+  if (settings.gear[g.slot] === g.id) delete settings.gear[g.slot];
+  else settings.gear[g.slot] = g.id;
+  save(SETTINGS_KEY, settings);
+  render();
+  updatePreview();
 });
 
 // ---------- Delete ----------
@@ -796,6 +1103,7 @@ document.addEventListener("click", (event) => {
   workouts = workouts.filter((w) => w !== removed);
   if (removed) syncQuest(removed.date);
   persist();
+  syncUnlocks();
   render();
 });
 
@@ -819,13 +1127,14 @@ settingsForm.addEventListener("submit", (event) => {
   }
   settings = { ...settings, goal, weight };
   save(SETTINGS_KEY, settings);
+  syncUnlocks();
   render();
   status.textContent = "Saved.";
   status.classList.add("success");
 });
 
 $("export-btn").addEventListener("click", () => {
-  const data = { settings, workouts, questAwards };
+  const data = { settings, workouts, questAwards, unlocks: seen };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
@@ -835,10 +1144,11 @@ $("export-btn").addEventListener("click", () => {
 });
 
 $("clear-btn").addEventListener("click", () => {
-  if (!confirm("Delete ALL workouts, XP and levels? This cannot be undone.")) return;
+  if (!confirm("Delete ALL workouts, XP, levels, badges and gear? This cannot be undone.")) return;
   workouts = [];
   questAwards = [];
   persist();
+  syncUnlocks();
   render();
 });
 
@@ -849,11 +1159,14 @@ let migrated = false;
 for (const w of workouts) {
   if (w.xp == null) {
     w.cls = w.cls || "warrior";
-    w.xp = workoutXp(w.type, w.duration, w.cls);
+    w.xp = workoutXp(w.type, w.duration, w.cls, 0);
     migrated = true;
   }
 }
 if (migrated) persist();
+
+// Catch up quietly on anything unlocked before this version or while away
+syncUnlocks();
 
 if (settings.cls) {
   renderActivities();

@@ -115,6 +115,27 @@
       </form>
     </section>
 
+    <!-- Loot -->
+    <section id="loot" class="screen" data-title="Loot">
+      <div class="panel loot-hero">
+        <div class="portrait large" id="loot-portrait"></div>
+        <div>
+          <div class="hero-name pixel" id="loot-name"></div>
+          <div class="hint" id="loot-bonus"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2 class="pixel section-head"><span>Armory</span><span id="gear-count"></span></h2>
+        <div id="gear-slots"></div>
+      </div>
+
+      <div class="panel">
+        <h2 class="pixel section-head"><span>Badges</span><span id="badge-count"></span></h2>
+        <div class="badge-grid" id="badge-grid"></div>
+      </div>
+    </section>
+
     <!-- Journal -->
     <section id="journal" class="screen" data-title="Journal">
       <div class="panel totals" id="all-time"></div>
@@ -154,6 +175,7 @@
   <nav class="tab-bar" aria-label="Main">
     <button class="tab active" data-screen="hero"><span class="tab-icon">&#128737;&#xFE0F;</span>Hero</button>
     <button class="tab" data-screen="train"><span class="tab-icon">&#9876;&#xFE0F;</span>Train</button>
+    <button class="tab" data-screen="loot"><span class="tab-icon">&#127873;</span>Loot</button>
     <button class="tab" data-screen="journal"><span class="tab-icon">&#128220;</span>Journal</button>
     <button class="tab" data-screen="settings"><span class="tab-icon">&#9978;&#xFE0F;</span>Camp</button>
   </nav>
