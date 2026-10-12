@@ -363,6 +363,80 @@ const BADGES = [
 
 const badgeById = (id) => BADGES.find((b) => b.id === id);
 
+// Every badge grants a permanent buff while you hold it. Buffs of the same
+// kind add up. XP buffs apply to workouts, quests and records logged after
+// you earn them; battle buffs apply in every fight.
+const BADGE_BUFFS = {
+  first: { hp: 5 },
+  trained10: { potions: 1 },
+  trained50: { xp: 5 },
+  trained100: { pow: 10 },
+  streak3: { crit: 3 },
+  streak7: { energy: 15 },
+  streak30: { xp: 10 },
+  hour: { hp: 10 },
+  km5: { dodge: 2 },
+  km10: { dodge: 3 },
+  marathon: { regen: 1 },
+  goal: { energyRegen: 5 },
+  quests5: { questXp: 25 },
+  quests25: { questXp: 50 },
+  allstats: { allStats: 2 },
+  explorer: { potionHeal: 10 },
+  str: { xpSTR: 10 },
+  agi: { xpAGI: 10 },
+  wis: { xpWIS: 10 },
+  vit: { xpVIT: 10 },
+  lvl5: { pow: 5 },
+  lvl10: { def: 10 },
+  lvl20: { pow: 10, hp: 10 },
+  pr: { prXp: 50 },
+  skills5: { skillCost: 5 },
+  mastery: { crit: 5 },
+  delver: { bossDmg: 10 },
+  hunter: { pow: 5 },
+  dragonslayer: { xp: 10 },
+};
+
+const BUFF_LABELS = {
+  hp: (v) => `+${v}% max HP`,
+  pow: (v) => `+${v}% battle power`,
+  def: (v) => `+${v}% armor`,
+  crit: (v) => `+${v}% crit chance`,
+  dodge: (v) => `+${v}% dodge`,
+  regen: (v) => `Heal ${v}% HP each battle turn`,
+  energy: (v) => `Start battles with +${v} energy`,
+  energyRegen: (v) => `+${v} energy each battle turn`,
+  potions: (v) => `+${v} potion per dungeon`,
+  potionHeal: (v) => `Potions heal +${v}% more`,
+  skillCost: (v) => `Combat skills cost ${v} less energy`,
+  bossDmg: (v) => `+${v}% damage to bosses`,
+  allStats: (v) => `+${v} to every attribute`,
+  xp: (v) => `+${v}% XP from workouts`,
+  xpSTR: (v) => `+${v}% XP on Strength workouts`,
+  xpAGI: (v) => `+${v}% XP on Agility workouts`,
+  xpWIS: (v) => `+${v}% XP on Wisdom workouts`,
+  xpVIT: (v) => `+${v}% XP on Vitality workouts`,
+  questXp: (v) => `+${v}% daily quest XP`,
+  prXp: (v) => `+${v}% personal record XP`,
+};
+
+function buffText(buff) {
+  return Object.entries(buff)
+    .map(([key, value]) => BUFF_LABELS[key](value))
+    .join(", ");
+}
+
+// Sum of the buffs from every badge currently earned
+function badgeBuffs(status = badgeStatus()) {
+  const total = Object.fromEntries(Object.keys(BUFF_LABELS).map((key) => [key, 0]));
+  for (const b of status) {
+    if (!b.earned) continue;
+    for (const [key, value] of Object.entries(BADGE_BUFFS[b.id] || {})) total[key] += value;
+  }
+  return total;
+}
+
 // ---------- Challenges & skills ----------
 
 // Kinds: "lift" (weight x reps, ranked by estimated 1-rep max relative to
@@ -540,7 +614,13 @@ function gearBonus() {
   return Object.values(settings.gear).reduce((total, id) => total + ((gearById(id) || {}).xp || 0), 0);
 }
 
-function workoutXp(type, minutes, cls, bonusPct = gearBonus()) {
+// Gear plus badge XP buffs, in percent
+function xpBonus(type) {
+  const buffs = badgeBuffs();
+  return gearBonus() + buffs.xp + buffs[`xp${(ACTIVITIES[type] || ACTIVITIES.other).stat}`];
+}
+
+function workoutXp(type, minutes, cls, bonusPct = xpBonus(type)) {
   const stat = (ACTIVITIES[type] || ACTIVITIES.other).stat;
   return Math.round(minutes * XP_PER_MINUTE * multiplier(cls, stat) * (1 + bonusPct / 100));
 }
@@ -659,6 +739,10 @@ function questProgress(quest, list) {
 // Re-checks a day's quest after workouts change. Quests can only be earned
 // on the day itself, but deleting a workout can take a reward away again.
 // Returns the quest if it was newly completed.
+function questReward(quest) {
+  return Math.round(quest.xp * (1 + badgeBuffs().questXp / 100));
+}
+
 function syncQuest(key) {
   const award = questAwards.find((a) => a.date === key);
   const isToday = key === toKey(new Date());
@@ -667,8 +751,9 @@ function syncQuest(key) {
   const p = questProgress(quest, workoutsOn(key));
   const met = p.cur >= p.target;
   if (met && !award) {
-    questAwards.push({ date: key, id: quest.id, xp: quest.xp });
-    return quest;
+    const award = { date: key, id: quest.id, xp: questReward(quest) };
+    questAwards.push(award);
+    return { ...quest, xp: award.xp };
   }
   if (!met && award) questAwards = questAwards.filter((a) => a !== award);
   return null;
@@ -809,6 +894,8 @@ function heroAttributes() {
   for (const { chId, rank } of learnedSkills()) {
     values[CHALLENGES[chId].stat] += RANK_STATS.slice(0, rank).reduce((a, b) => a + b, 0);
   }
+  const allStats = badgeBuffs().allStats;
+  for (const stat of Object.keys(values)) values[stat] += allStats;
   return values;
 }
 
@@ -853,10 +940,10 @@ function renderHero() {
   $("quest-card").classList.toggle("done", done);
   $("quest-name").textContent = quest.name;
   $("quest-desc").textContent = quest.desc;
-  $("quest-reward").textContent = done ? "Complete!" : `+${quest.xp} XP`;
+  $("quest-reward").textContent = done ? "Complete!" : `+${questReward(quest)} XP`;
   $("quest-fill").style.width = `${Math.min(p.cur / p.target, 1) * 100}%`;
   $("quest-progress").textContent = done
-    ? `Reward claimed: +${quest.xp} XP`
+    ? `Reward claimed: +${award ? award.xp : questReward(quest)} XP`
     : `${p.cur} / ${p.target} ${p.unit}`;
 
   // Today
@@ -1007,6 +1094,11 @@ function renderLoot() {
   $("loot-bonus").textContent = bonus ? `Gear bonus: +${bonus}% XP` : "Equip gear to customize your hero";
   $("gear-count").textContent = `${unlocked.size} / ${GEAR.length}`;
 
+  const active = Object.entries(badgeBuffs(status)).filter(([, value]) => value > 0);
+  $("buff-list").innerHTML = active.length
+    ? active.map(([key, value]) => `<li>${BUFF_LABELS[key](value)}</li>`).join("")
+    : `<li class="empty-state">Earn badges to gain permanent buffs.</li>`;
+
   $("gear-slots").innerHTML = Object.entries(SLOTS)
     .map(([slot, label]) => {
       const tiles = GEAR.filter((g) => g.slot === slot)
@@ -1039,6 +1131,7 @@ function renderLoot() {
           <span class="achievement-icon" aria-hidden="true">${b.icon}</span>
           <span class="achievement-name">${b.name}</span>
           <span class="achievement-desc">${b.desc}</span>
+          <span class="achievement-buff">${buffText(BADGE_BUFFS[b.id])}</span>
           ${b.earned
             ? `<span class="achievement-state pixel">Earned</span>`
             : `<div class="bar mini-bar"><div class="bar-fill" style="width:${(b.cur / b.target) * 100}%"></div></div>
@@ -1280,7 +1373,7 @@ function celebrate(levelBefore, unlocks) {
     );
   }
   for (const b of unlocks.badges) {
-    popup(b.icon, "Badge Earned!", `${b.name}: ${b.desc}`);
+    popup(b.icon, "Badge Earned!", `${b.name}: ${b.desc}. Permanent buff: ${buffText(BADGE_BUFFS[b.id])}!`);
   }
   for (const g of unlocks.gear) {
     popup(
@@ -1415,7 +1508,7 @@ featForm.addEventListener("submit", (event) => {
   const isPR = !previous || isBetter(chId, prScore(feat), prScore(previous));
   const rankBefore = skillRank(chId);
   const rankAfter = Math.max(rankBefore, rankFor(chId, rankScore(feat)));
-  feat.xp = isPR ? PR_XP : 0;
+  feat.xp = isPR ? Math.round(PR_XP * (1 + badgeBuffs().prXp / 100)) : 0;
 
   feats.push(feat);
   persist();
@@ -1430,7 +1523,7 @@ featForm.addEventListener("submit", (event) => {
     popup(
       ch.icon,
       previous ? "New Personal Record!" : "Record Set!",
-      `${ch.name}: ${featText(feat)}${previous ? ` (old best: ${featText(previous)})` : ""}. +${PR_XP} XP`
+      `${ch.name}: ${featText(feat)}${previous ? ` (old best: ${featText(previous)})` : ""}. +${feat.xp} XP`
     );
   } else {
     toast(`Logged. Best is still ${featText(previous).replace(/ \(.*\)/, "")}`);

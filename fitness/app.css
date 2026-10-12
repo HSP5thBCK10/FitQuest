@@ -1246,6 +1246,38 @@ textarea:focus {
   flex: 1;
 }
 
+.achievement-buff {
+  font-size: 0.68rem;
+  line-height: 1.25;
+  color: var(--gold);
+  opacity: 0.55;
+}
+
+.achievement.earned .achievement-buff {
+  opacity: 1;
+}
+
+.buff-list {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.buff-list li {
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  color: var(--gold);
+  background: var(--panel-2);
+  border: 2px solid #000;
+  box-shadow: inset 0 0 0 2px var(--border);
+}
+
+.buff-list li.empty-state {
+  grid-column: 1 / -1;
+  color: var(--muted);
+}
+
 .achievement-state {
   font-size: 0.65rem;
   color: var(--muted);

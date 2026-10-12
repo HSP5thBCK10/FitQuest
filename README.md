@@ -119,6 +119,15 @@ that costs energy.
 - **29 achievement badges**: workout milestones (1/10/50/100), streaks (3/7/30 days),
   distance (5K, 10K, marathon total), quests, levels, attribute mastery and more.
   Locked badges show your progress toward them.
+- **Every badge grants a permanent buff**, and buffs stack. The Loot screen lists each
+  badge's buff and an **Active Buffs** total. XP buffs apply to workouts, quests and
+  records logged after you earn the badge; battle buffs apply in every fight.
+
+| Buff type | Badges |
+| --------- | ------ |
+| XP | Veteran +5% · Iron Habit +10% · Dragonslayer +10% (all workouts); Iron Body / Wind Runner / Inner Calm / Trailblazer +10% (STR / AGI / WIS / VIT workouts); Quest Hunter +25% · Questmaster +50% (quest XP); Personal Best +50% (PR XP) |
+| Battle stats | First Blood +5% HP · Endurance +10% HP · Legend +10% HP & power · Centurion +10% power · Rising Hero +5% power · Monster Hunter +5% power · Champion +10% armor · On Fire +3% crit · Grandmaster +5% crit · First 5K +2% dodge · 10K Club +3% dodge · Jack of All Trades +2 every attribute |
+| Dungeon perks | Adventurer +1 potion · Explorer potions heal +10% · Marathoner 1% HP regen per turn · Unstoppable +15 starting energy · Goal Crusher +5 energy per turn · Skilled skills cost 5 less · Dungeon Delver +10% boss damage |
 - **21 pieces of unlockable gear** in 4 slots: headgear, capes, companion pets and
   auras. Unlock them by leveling up, earning badges or clearing dungeons, and equip them in **Loot**:
   they appear on your pixel hero. Top-tier items give a permanent +5% XP bonus each
@@ -157,5 +166,5 @@ The app must be served over HTTPS to install. The easiest free option is GitHub 
 | `manifest.json`    | Makes the app installable                   |
 | `icons/`, `fonts/` | App icons and the Press Start 2P pixel font (OFL) |
 
-When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v6`) so installed
+When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v7`) so installed
 copies pick up the update.

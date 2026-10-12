@@ -139,7 +139,12 @@ function combatSkillFor(cls, chId) {
 }
 
 function combatSkills() {
-  return CLASS_SKILLS[settings.cls].map((s) => ({ ...s, rank: skillRank(s.challenge) }));
+  const discount = badgeBuffs().skillCost;
+  return CLASS_SKILLS[settings.cls].map((s) => ({
+    ...s,
+    rank: skillRank(s.challenge),
+    cost: Math.max(5, s.cost - discount),
+  }));
 }
 
 function skillPower(rank) {
@@ -151,9 +156,11 @@ function effective(attr) {
   return Math.sqrt(Math.max(0, attr)) * 4;
 }
 
-// Battle stats come straight from real training: attributes and level
+// Battle stats come straight from real training (attributes and level),
+// plus the permanent buffs from badges
 function heroCombat() {
   const a = heroAttributes();
+  const buffs = badgeBuffs();
   const level = levelInfo(totalXp()).level;
   const cls = settings.cls;
   const primary = {
@@ -165,13 +172,20 @@ function heroCombat() {
   // A barbarian's muscle mass counts toward their health
   const toughness = a.VIT + (cls === "barbarian" ? a.STR * 0.5 : 0);
   return {
-    maxHp: Math.round((50 + level * 10 + effective(toughness) * 3) * (cls === "barbarian" ? 1.2 : 1)),
-    pow: Math.round((4 + level * 1.5 + effective(primary)) * (cls === "warrior" ? 1.15 : 1)),
-    def: Math.round((level + effective(a.VIT) * 0.5) * (cls === "warrior" ? 1.15 : 1)),
-    crit: Math.round(Math.min(5 + effective(a.AGI) * 0.6 + (cls === "assassin" ? 10 : 0), 60)),
-    dodge: Math.round(Math.min(2 + effective(a.AGI) * 0.3, 30)),
-    regen: cls === "monk" ? 0.03 : 0,
+    maxHp: Math.round(
+      (50 + level * 10 + effective(toughness) * 3) * (cls === "barbarian" ? 1.2 : 1) * (1 + buffs.hp / 100)
+    ),
+    pow: Math.round((4 + level * 1.5 + effective(primary)) * (cls === "warrior" ? 1.15 : 1) * (1 + buffs.pow / 100)),
+    def: Math.round((level + effective(a.VIT) * 0.5) * (cls === "warrior" ? 1.15 : 1) * (1 + buffs.def / 100)),
+    crit: Math.round(Math.min(5 + effective(a.AGI) * 0.6 + (cls === "assassin" ? 10 : 0), 60) + buffs.crit),
+    dodge: Math.round(Math.min(2 + effective(a.AGI) * 0.3, 30) + buffs.dodge),
+    regen: (cls === "monk" ? 0.03 : 0) + buffs.regen / 100,
     lifesteal: cls === "barbarian" ? 0.15 : 0,
+    startEnergy: Math.min(MAX_ENERGY, 40 + buffs.energy),
+    energyPerTurn: 15 + buffs.energyRegen,
+    potions: POTIONS_PER_RUN + buffs.potions,
+    potionHeal: 0.4 + buffs.potionHeal / 100,
+    bossDmg: buffs.bossDmg / 100,
   };
 }
 
@@ -244,10 +258,10 @@ function startDungeon(index) {
     floor: 0,
     stats,
     hp: stats.maxHp,
-    energy: 40,
+    energy: stats.startEnergy,
     buffs: [],
     dot: null,
-    potions: POTIONS_PER_RUN,
+    potions: stats.potions,
     log: [],
     busy: false,
     over: false,
@@ -270,7 +284,7 @@ function heroStrike(mult, opts = {}) {
       floatText("enemy", "MISS");
       continue;
     }
-    let m = mult;
+    let m = mult * (e.boss ? 1 + battle.stats.bossDmg : 1);
     if (opts.execute && e.hp / e.maxHp < opts.execute) m *= 3;
     const crit = Math.random() * 100 < battle.stats.crit + (opts.crit || 0);
     const raw = battle.stats.pow * m * (1 + buffTotal("atk")) * (crit ? 1.75 : 1);
@@ -419,7 +433,7 @@ function endRound() {
     if (!battle.dot.turns) battle.dot = null;
   }
   if (battle.stats.regen && battle.hp > 0) heal(battle.stats.regen);
-  battle.energy = Math.min(MAX_ENERGY, battle.energy + 15);
+  battle.energy = Math.min(MAX_ENERGY, battle.energy + battle.stats.energyPerTurn);
   battle.buffs = battle.buffs.map((b) => ({ ...b, turns: b.turns - 1 })).filter((b) => b.turns > 0);
 }
 
@@ -440,7 +454,7 @@ async function act(action) {
     addLog("You raise your guard.");
   } else if (action === "potion") {
     battle.potions--;
-    addLog(`🧪 You drink a potion and heal ${heal(0.4)} HP.`);
+    addLog(`🧪 You drink a potion and heal ${heal(battle.stats.potionHeal)} HP.`);
   } else if (skill) {
     useSkill(skill);
   }
@@ -607,7 +621,7 @@ function renderBattle() {
       <span class="action-name">🛡️ Defend</span><span class="action-sub">Block 50% · +20 EN</span>
     </button>
     <button type="button" class="action" data-action="potion" ${disabled || !b.potions ? "disabled" : ""}>
-      <span class="action-name">🧪 Potion</span><span class="action-sub">Heal 40% · ${b.potions} left</span>
+      <span class="action-name">🧪 Potion</span><span class="action-sub">Heal ${Math.round(b.stats.potionHeal * 100)}% · ${b.potions} left</span>
     </button>
     ${skills}`;
 }
