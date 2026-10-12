@@ -1364,6 +1364,11 @@ textarea:focus {
   cursor: pointer;
 }
 
+/* An odd card out (5 classes) spans the full row */
+.class-card:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
 .class-card .portrait {
   width: 84px;
   height: 84px;

@@ -89,12 +89,29 @@ const CLASSES = {
     bonus: { STR: 1.5, AGI: 1.5, WIS: 1.5, VIT: 1.5 },
     bonusText: "1.5× XP on all training",
     base: { STR: 6, AGI: 5, WIS: 4, VIT: 5 },
-    titles: ["Recruit", "Squire", "Soldier", "Knight", "Champion", "Commander", "Hero", "Legend"],
+    titles: ["Recruit", "Squire", "Soldier", "Vanguard", "Champion", "Commander", "Hero", "Legend"],
     quests: [
       { id: "w1", name: "Daily Drill", desc: "Train for 30 minutes", minutes: 30, xp: 50 },
       { id: "w2", name: "Shield Wall", desc: "Train Strength for 20 minutes", stat: "STR", minutes: 20, xp: 50 },
       { id: "w3", name: "Forced March", desc: "Train Vitality for 30 minutes", stat: "VIT", minutes: 30, xp: 50 },
       { id: "w4", name: "Battle Ready", desc: "Complete 2 training sessions", sessions: 2, xp: 60 },
+    ],
+  },
+  knight: {
+    name: "Knight",
+    color: "#a855f7",
+    body: "Strong & enduring",
+    tagline: "Unyielding. Train for real-world strength and stamina that lasts, not for looks.",
+    focus: "Long steady sessions, rucking and hiking, circuits and functional strength",
+    bonus: { STR: 1.75, VIT: 1.75 },
+    bonusText: "1.75× XP on Strength and Vitality training",
+    base: { STR: 7, AGI: 3, WIS: 4, VIT: 8 },
+    titles: ["Page", "Shieldbearer", "Knight-Errant", "Sworn Knight", "Knight Captain", "Paladin", "Lord Protector", "Knight of Legend"],
+    quests: [
+      { id: "k1", name: "Long Ride", desc: "Train Vitality for 45 minutes", stat: "VIT", minutes: 45, xp: 80 },
+      { id: "k2", name: "Trial of Endurance", desc: "Train for 60 minutes", minutes: 60, xp: 90 },
+      { id: "k3", name: "Squire's Drill", desc: "Train Strength for 30 minutes", stat: "STR", minutes: 30, xp: 60 },
+      { id: "k4", name: "Pilgrimage", desc: "Cover 8 km in any training", km: 8, xp: 80 },
     ],
   },
 };
@@ -173,6 +190,24 @@ const SPRITES = {
     "...MMM....MMM...",
     "................",
   ],
+  knight: [
+    "......pp......a.",
+    ".....ppp......a.",
+    ".....aaaaaa...a.",
+    ".....akkkka...a.",
+    ".....amaama...a.",
+    "......aaaa....a.",
+    "....mattttam..a.",
+    "TTT.matyytam.yyy",
+    "TyT.mattttam.mb.",
+    "yyy.aayyyyaa....",
+    "TyT.tttttttt....",
+    ".T..ttt..ttt....",
+    "....mm....mm....",
+    "....mm....mm....",
+    "...aaa....aaa...",
+    "................",
+  ],
 };
 
 const SPRITE_COLORS = {
@@ -187,6 +222,8 @@ const SPRITE_COLORS = {
   o: "#f59e0b", O: "#b45309", r: "#7c2d12",
   // warrior
   B: "#1d4ed8",
+  // knight
+  p: "#c084fc", t: "#7e22ce", T: "#581c87",
 };
 
 // Turns rows of letters into SVG pixels, offset by (dx, dy)
@@ -219,6 +256,7 @@ const ANCHORS = {
   assassin: { headTop: 0, shoulders: 6 },
   monk: { headTop: 1, shoulders: 6 },
   warrior: { headTop: 0, shoulders: 6 },
+  knight: { headTop: 2, shoulders: 6 },
 };
 
 // Unlock rules: { level }, { badge } or { dungeon }. xp = permanent % bonus on new workouts.

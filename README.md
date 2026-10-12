@@ -52,6 +52,7 @@ On first launch you choose a class (you can change it later in **Camp**):
 | **Assassin**  | Lean & athletic        | Running, HIIT, cycling, sports         | 2× XP on Agility      |
 | **Monk**      | Flexible & balanced    | Yoga, stretching, meditation           | 2× XP on Wisdom       |
 | **Warrior**   | Regular physique       | A balanced mix of everything           | 1.5× XP on all training |
+| **Knight**    | Strong & enduring      | Endurance, stamina & functional strength | 1.75× XP on Strength and Vitality |
 
 ## How the game works
 
@@ -106,9 +107,10 @@ that costs energy.
 | Assassin  | Shadowstep (mile), Blade Flurry (5K), Backstab (pull-ups), Poison Blade (push-ups), Smoke Bomb (plank)      |
 | Monk      | Inner Light (meditation), Iron Body (plank), Flowing Strikes (mile), Palm of Heaven (overhead press), Dragon Kick (pull-ups) |
 | Warrior   | Shield Bash (bench), Power Strike (squat), Second Wind (5K), Battle Shout (push-ups), Execute (deadlift)    |
+| Knight    | Valiant Strike (squat), Aegis Wall (plank), Vigil (5K), Lance Charge (deadlift), Oath of Iron (push-ups)    |
 
 - Each class also has a passive (Barbarian lifesteal, Assassin crit, Monk regeneration,
-  Warrior damage and armor).
+  Warrior damage and armor, Knight extra HP and armor with power from STR and VIT).
 - Monsters have abilities (enrage, life drain, armor, evasion, poison, burn), and bosses
   telegraph a huge attack every third turn, so that's the time to Defend.
 - Clearing a dungeon unlocks the next one and drops exclusive gear. Fights don't give XP:
@@ -166,5 +168,5 @@ The app must be served over HTTPS to install. The easiest free option is GitHub 
 | `manifest.json`    | Makes the app installable                   |
 | `icons/`, `fonts/` | App icons and the Press Start 2P pixel font (OFL) |
 
-When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v7`) so installed
+When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v8`) so installed
 copies pick up the update.

@@ -95,6 +95,18 @@ const CLASS_SKILLS = {
     { id: "execute", name: "Execute", icon: "🪓", challenge: "deadlift", cost: 40,
       desc: "150% damage, tripled against foes under 30% HP", effect: { damage: 1.5, execute: 0.3 } },
   ],
+  knight: [
+    { id: "valiant_strike", name: "Valiant Strike", icon: "⚜️", challenge: "squat", cost: 35,
+      desc: "150% damage and +25% armor for 2 turns", effect: { damage: 1.5, buff: { def: 0.25, turns: 2 } } },
+    { id: "aegis_wall", name: "Aegis Wall", icon: "🛡️", challenge: "plank", cost: 30,
+      desc: "Block 50% of damage for 2 turns", effect: { buff: { block: 0.5, turns: 2 } } },
+    { id: "vigil", name: "Vigil", icon: "🕯️", challenge: "fivek", cost: 35,
+      desc: "Heal 5% of max HP every turn for 4 turns", effect: { buff: { regen: 0.05, turns: 4 } } },
+    { id: "lance_charge", name: "Lance Charge", icon: "🏇", challenge: "deadlift", cost: 45,
+      desc: "A thundering charge for 220% damage", effect: { damage: 2.2 } },
+    { id: "oath_of_iron", name: "Oath of Iron", icon: "🤞", challenge: "pushups", cost: 30,
+      desc: "+30% damage for 3 turns and cure poison", effect: { buff: { atk: 0.3, turns: 3 }, cleanse: true } },
+  ],
 };
 
 const CLASS_PASSIVES = {
@@ -102,6 +114,7 @@ const CLASS_PASSIVES = {
   assassin: "Killer Instinct: +10% crit chance",
   monk: "Inner Peace: heal 3% HP every turn",
   warrior: "Veteran: +15% damage and +15% armor",
+  knight: "Endurance: +20% max HP, +10% armor, and power from both STR and VIT",
 };
 
 const FLOOR_LEVELS = [0, 0, 1];
@@ -168,15 +181,18 @@ function heroCombat() {
     assassin: a.AGI,
     monk: a.WIS,
     warrior: ((a.STR + a.AGI + a.WIS + a.VIT) / 4) * 1.3,
+    knight: (a.STR + a.VIT) * 0.5,
   }[cls];
   // A barbarian's muscle mass counts toward their health
   const toughness = a.VIT + (cls === "barbarian" ? a.STR * 0.5 : 0);
+  const hpMult = { barbarian: 1.2, knight: 1.2 }[cls] || 1;
+  const defMult = { warrior: 1.15, knight: 1.1 }[cls] || 1;
   return {
     maxHp: Math.round(
-      (50 + level * 10 + effective(toughness) * 3) * (cls === "barbarian" ? 1.2 : 1) * (1 + buffs.hp / 100)
+      (50 + level * 10 + effective(toughness) * 3) * hpMult * (1 + buffs.hp / 100)
     ),
     pow: Math.round((4 + level * 1.5 + effective(primary)) * (cls === "warrior" ? 1.15 : 1) * (1 + buffs.pow / 100)),
-    def: Math.round((level + effective(a.VIT) * 0.5) * (cls === "warrior" ? 1.15 : 1) * (1 + buffs.def / 100)),
+    def: Math.round((level + effective(a.VIT) * 0.5) * defMult * (1 + buffs.def / 100)),
     crit: Math.round(Math.min(5 + effective(a.AGI) * 0.6 + (cls === "assassin" ? 10 : 0), 60) + buffs.crit),
     dodge: Math.round(Math.min(2 + effective(a.AGI) * 0.3, 30) + buffs.dodge),
     regen: (cls === "monk" ? 0.03 : 0) + buffs.regen / 100,
@@ -195,14 +211,16 @@ function monsterOnFloor(dungeon, floor) {
 
 function makeMonster(id, level) {
   const m = MONSTERS[id];
-  const hp = Math.round((40 + level * 16 + level * level * 0.6) * (m.boss ? 2 : 1));
+  // Deeper dungeons get a little tougher to keep pace with badge buffs
+  const scale = 1 + level * 0.006;
+  const hp = Math.round((40 + level * 16 + level * level * 0.6) * scale * (m.boss ? 2 : 1));
   return {
     ...m,
     id,
     level,
     hp,
     maxHp: hp,
-    atk: (7 + level * 2 + level * level * 0.08) * (m.boss ? 1.2 : 1),
+    atk: (7 + level * 2 + level * level * 0.08) * scale * (m.boss ? 1.2 : 1),
     def: level * (m.ability === "armored" ? 2 : 1),
     stun: false,
     stunImmune: false,
@@ -341,10 +359,11 @@ function useSkill(skill) {
     const b = { ...fx.buff, name: skill.name };
     if (b.atk) b.atk *= power;
     if (b.def) b.def *= power;
+    if (b.regen) b.regen *= power;
     if (b.block) b.block = Math.min(b.block + 0.1 * (skill.rank - 1), 0.8);
     if (b.dodge) b.dodge += 10 * (skill.rank - 1);
     battle.buffs.push(b);
-    if (!fx.damage) parts.push(skill.desc.toLowerCase());
+    if (!fx.damage) parts.push(skill.desc[0].toLowerCase() + skill.desc.slice(1));
   }
   addLog(`${skill.icon} ${skill.name}: ${parts.join(", ")}.`);
 }
@@ -432,7 +451,8 @@ function endRound() {
     battle.dot.turns--;
     if (!battle.dot.turns) battle.dot = null;
   }
-  if (battle.stats.regen && battle.hp > 0) heal(battle.stats.regen);
+  const regen = battle.stats.regen + buffTotal("regen");
+  if (regen && battle.hp > 0) heal(regen);
   battle.energy = Math.min(MAX_ENERGY, battle.energy + battle.stats.energyPerTurn);
   battle.buffs = battle.buffs.map((b) => ({ ...b, turns: b.turns - 1 })).filter((b) => b.turns > 0);
 }
