@@ -86,13 +86,41 @@ Lifts use your estimated one-rep max (weight × reps), compared to your body wei
 time of the lift, so ranks are fair for every size. Weights can be entered in kg or lb
 (set in **Camp**).
 
+## Fight: dungeons & combat skills
 
+Take your hero into **5 dungeons** (Goblin Cave → Haunted Crypt → Spider Forest → Volcano
+Depths → Dragon's Peak), each with 3 floors: two monsters and a boss. Battles are
+turn-based: **Attack**, **Defend**, drink a **Potion** (2 per run), or use a class skill
+that costs energy.
 
-- **26 achievement badges**: workout milestones (1/10/50/100), streaks (3/7/30 days),
+- **Your battle stats come from real training.** HP, power, armor, crit and dodge are
+  based on your level and attributes, so you can't grind your way through: you get
+  stronger by working out.
+- **Combat skills are unique to each class** (5 each) and are learned through
+  challenges: reach rank I in the matching challenge to unlock a skill, and every higher
+  rank makes it stronger (+25% power per rank).
+
+| Class     | Combat skills (challenge that teaches it)                                                                    |
+| --------- | ------------------------------------------------------------------------------------------------------------ |
+| Barbarian | Crushing Blow (bench), Earthquake (squat), Rampage (deadlift), War Cry (push-ups), Thick Hide (plank)        |
+| Assassin  | Shadowstep (mile), Blade Flurry (5K), Backstab (pull-ups), Poison Blade (push-ups), Smoke Bomb (plank)      |
+| Monk      | Inner Light (meditation), Iron Body (plank), Flowing Strikes (mile), Palm of Heaven (overhead press), Dragon Kick (pull-ups) |
+| Warrior   | Shield Bash (bench), Power Strike (squat), Second Wind (5K), Battle Shout (push-ups), Execute (deadlift)    |
+
+- Each class also has a passive (Barbarian lifesteal, Assassin crit, Monk regeneration,
+  Warrior damage and armor).
+- Monsters have abilities (enrage, life drain, armor, evasion, poison, burn), and bosses
+  telegraph a huge attack every third turn, so that's the time to Defend.
+- Clearing a dungeon unlocks the next one and drops exclusive gear. Fights don't give XP:
+  that only comes from real exercise.
+
+## Loot: gear & badges
+
+- **29 achievement badges**: workout milestones (1/10/50/100), streaks (3/7/30 days),
   distance (5K, 10K, marathon total), quests, levels, attribute mastery and more.
   Locked badges show your progress toward them.
-- **16 pieces of unlockable gear** in 4 slots: headgear, capes, companion pets and
-  auras. Unlock them by leveling up or earning badges, and equip them in **Loot**:
+- **21 pieces of unlockable gear** in 4 slots: headgear, capes, companion pets and
+  auras. Unlock them by leveling up, earning badges or clearing dungeons, and equip them in **Loot**:
   they appear on your pixel hero. Top-tier items give a permanent +5% XP bonus each
   (applies to new workouts).
 - Popups announce new badges and gear when you earn them. Deleting workouts can take
@@ -121,12 +149,13 @@ The app must be served over HTTPS to install. The easiest free option is GitHub 
 
 | File               | Purpose                                     |
 | ------------------ | ------------------------------------------- |
-| `index.html`       | Screens: Hero, Train, Loot, Journal, Camp, class picker |
+| `index.html`       | Screens: Hero, Train, Fight, Loot, Journal, Camp, class picker, battle |
 | `app.css`          | Pixel/retro game styling                    |
 | `app.js`           | Classes, XP, quests, challenges, skills, badges, gear, sprites |
+| `battle.js`        | Dungeons, monsters, class combat skills, turn-based battles |
 | `sw.js`            | Service worker for offline use              |
 | `manifest.json`    | Makes the app installable                   |
 | `icons/`, `fonts/` | App icons and the Press Start 2P pixel font (OFL) |
 
-When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v5`) so installed
+When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v6`) so installed
 copies pick up the update.

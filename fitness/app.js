@@ -221,7 +221,7 @@ const ANCHORS = {
   warrior: { headTop: 0, shoulders: 6 },
 };
 
-// Unlock rules: { level } or { badge }. xp = permanent % bonus on new workouts.
+// Unlock rules: { level }, { badge } or { dungeon }. xp = permanent % bonus on new workouts.
 const GEAR = [
   // Head: drawn on top of the head
   { id: "leaf_circlet", slot: "head", name: "Leaf Circlet", unlock: { level: 3 },
@@ -262,6 +262,18 @@ const GEAR = [
     tones: ["#2e1065", "#5b21b6", "#a78bfa"] },
   { id: "golden_aura", slot: "aura", name: "Golden Aura", unlock: { badge: "trained100" }, xp: 5,
     tones: ["#713f12", "#a16207", "#facc15"] },
+
+  // Dungeon boss loot
+  { id: "goblin_crown", slot: "head", name: "Goblin Crown", unlock: { dungeon: "cave" },
+    art: ["g.gg.g", "gyggyg"], colors: { g: "#65a30d", y: "#facc15" } },
+  { id: "bone_cloak", slot: "back", name: "Bone Cloak", unlock: { dungeon: "crypt" },
+    colors: { c: "#d6d3d1", h: "#57534e" } },
+  { id: "sprout", slot: "pet", name: "Treant Sprout", unlock: { dungeon: "forest" },
+    art: [".g.g.", "ggggg", "bkbkb", ".b.b."], colors: { g: "#22c55e", b: "#92400e", k: "#111827" } },
+  { id: "magma_aura", slot: "aura", name: "Magma Aura", unlock: { dungeon: "volcano" },
+    tones: ["#450a0a", "#b91c1c", "#fbbf24"] },
+  { id: "dragon_helm", slot: "head", name: "Dragonslayer Helm", unlock: { dungeon: "peak" }, xp: 5,
+    art: ["r.yy.r", "rryyrr"], colors: { r: "#b91c1c", y: "#facc15" } },
 ];
 
 const SLOTS = {
@@ -344,6 +356,9 @@ const BADGES = [
   { id: "pr", icon: "📈", name: "Personal Best", desc: "Record your first challenge", check: (c) => [c.feats, 1] },
   { id: "skills5", icon: "📖", name: "Skilled", desc: "Learn 5 skills", check: (c) => [c.skills, 5] },
   { id: "mastery", icon: "🥋", name: "Grandmaster", desc: "Reach rank III in any skill", check: (c) => [c.maxRank, 3] },
+  { id: "delver", icon: "🗝️", name: "Dungeon Delver", desc: "Clear your first dungeon", check: (c) => [c.clears, 1] },
+  { id: "hunter", icon: "☠️", name: "Monster Hunter", desc: "Defeat 50 monsters", check: (c) => [c.kills, 50] },
+  { id: "dragonslayer", icon: "🐉", name: "Dragonslayer", desc: "Conquer Dragon's Peak", check: (c) => [c.dragon, 1] },
 ];
 
 const badgeById = (id) => BADGES.find((b) => b.id === id);
@@ -698,6 +713,9 @@ function badgeContext() {
     feats: feats.length,
     skills: learnedSkills().reduce((total, s) => total + s.rank, 0),
     maxRank: Math.max(0, ...learnedSkills().map((s) => s.rank)),
+    clears: Object.keys(dungeonProgress().cleared).length,
+    kills: dungeonProgress().kills,
+    dragon: dungeonProgress().cleared.peak ? 1 : 0,
   };
 }
 
@@ -712,11 +730,16 @@ function badgeStatus() {
 function unlockedGear(badges = badgeStatus()) {
   const earned = new Set(badges.filter((b) => b.earned).map((b) => b.id));
   const level = levelInfo(totalXp()).level;
-  return GEAR.filter((g) => (g.unlock.level ? level >= g.unlock.level : earned.has(g.unlock.badge)));
+  const cleared = dungeonProgress().cleared;
+  return GEAR.filter((g) =>
+    g.unlock.level ? level >= g.unlock.level : g.unlock.dungeon ? Boolean(cleared[g.unlock.dungeon]) : earned.has(g.unlock.badge)
+  );
 }
 
 function unlockText(g) {
-  return g.unlock.level ? `Reach LV ${g.unlock.level}` : `Earn "${badgeById(g.unlock.badge).name}"`;
+  if (g.unlock.level) return `Reach LV ${g.unlock.level}`;
+  if (g.unlock.dungeon) return `Clear ${DUNGEONS.find((d) => d.id === g.unlock.dungeon).name}`;
+  return `Earn "${badgeById(g.unlock.badge).name}"`;
 }
 
 // Compares what is unlocked now with what the player has seen. Gear that is
@@ -776,6 +799,19 @@ function workoutItem(w) {
     </li>`;
 }
 
+// Attributes: class base + 1 point per 15 minutes trained + skill rank points
+function heroAttributes() {
+  const values = {};
+  for (const stat of Object.keys(STATS)) {
+    const minutes = sumBy(workouts.filter((w) => activityOf(w).stat === stat), "duration");
+    values[stat] = CLASSES[settings.cls].base[stat] + Math.floor(minutes / 15);
+  }
+  for (const { chId, rank } of learnedSkills()) {
+    values[CHALLENGES[chId].stat] += RANK_STATS.slice(0, rank).reduce((a, b) => a + b, 0);
+  }
+  return values;
+}
+
 function pips(rank) {
   return RANKS.map((_, i) => `<span class="pip ${i < rank ? "on" : ""}"></span>`).join("");
 }
@@ -828,17 +864,8 @@ function renderHero() {
   $("today-calories").textContent = sumBy(todays, "calories");
   $("streak").textContent = currentStreak();
 
-  // Attributes: class base + 1 point per 15 minutes trained
-  const values = {};
-  for (const stat of Object.keys(STATS)) {
-    const minutes = sumBy(workouts.filter((w) => activityOf(w).stat === stat), "duration");
-    values[stat] = cls.base[stat] + Math.floor(minutes / 15);
-  }
-  // Skills grant extra attribute points
+  const values = heroAttributes();
   const skills = learnedSkills();
-  for (const { chId, rank } of skills) {
-    values[CHALLENGES[chId].stat] += RANK_STATS.slice(0, rank).reduce((a, b) => a + b, 0);
-  }
   $("skill-list").innerHTML = skills.length
     ? skills
         .map(({ chId, rank }) => {
@@ -1029,6 +1056,7 @@ function render() {
   renderSettings();
   renderLoot();
   renderChallenges();
+  renderFight();
 }
 
 // ---------- Feedback ----------
@@ -1290,6 +1318,7 @@ function renderChallenges() {
       return `
         <button type="button" class="activity ${id === selected ? "selected" : ""}" data-value="${id}"
           role="radio" aria-checked="${id === selected}">
+          ${combatSkillFor(settings.cls, id) ? `<span class="badge">⚔ SKILL</span>` : ""}
           <span class="activity-icon" aria-hidden="true">${ch.icon}</span>
           <span>${ch.name}</span>
           <span class="pips">${pips(skillRank(id))}</span>
@@ -1323,6 +1352,12 @@ function renderChallenges() {
         )
         .join("")}
     </ol>
+    ${(() => {
+      const cs = combatSkillFor(settings.cls, selected);
+      return cs
+        ? `<p class="combat-unlock">⚔ ${CLASSES[settings.cls].name} combat skill: <strong>${cs.icon} ${cs.name}</strong>. ${cs.desc}. Unlocks at rank I and grows stronger with each rank.</p>`
+        : "";
+    })()}
     ${ch.kind === "lift" ? `<p class="hint">Lift ranks compare your estimated one-rep max to your body weight (set in Camp).</p>` : ""}`;
 }
 
@@ -1488,7 +1523,7 @@ settingsForm.addEventListener("submit", (event) => {
 });
 
 $("export-btn").addEventListener("click", () => {
-  const data = { settings, workouts, questAwards, feats, unlocks: seen };
+  const data = { settings, workouts, questAwards, feats, dungeons: dungeonProgress(), unlocks: seen };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
@@ -1498,11 +1533,12 @@ $("export-btn").addEventListener("click", () => {
 });
 
 $("clear-btn").addEventListener("click", () => {
-  if (!confirm("Delete ALL workouts, records, XP, levels, skills, badges and gear? This cannot be undone.")) return;
+  if (!confirm("Delete ALL workouts, records, XP, levels, skills, badges, gear and dungeon progress? This cannot be undone.")) return;
   workouts = [];
   questAwards = [];
   feats = [];
   persist();
+  resetDungeons();
   syncUnlocks();
   render();
 });

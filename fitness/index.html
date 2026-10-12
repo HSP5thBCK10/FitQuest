@@ -166,6 +166,26 @@
       </form>
     </section>
 
+    <!-- Fight -->
+    <section id="fight" class="screen" data-title="Fight">
+      <div class="panel">
+        <h2 class="pixel">Battle Stats</h2>
+        <div class="combat-stats" id="combat-stats"></div>
+        <p class="hint passive" id="class-passive"></p>
+        <p class="hint">Your power comes from real training. Workouts raise your attributes, and challenges teach combat skills.</p>
+      </div>
+
+      <div class="panel">
+        <h2 class="pixel">Combat Skills</h2>
+        <ul class="workout-list" id="combat-skill-list"></ul>
+      </div>
+
+      <div class="panel">
+        <h2 class="pixel section-head"><span>Dungeons</span><span id="kill-count"></span></h2>
+        <div class="dungeon-list" id="dungeon-list"></div>
+      </div>
+    </section>
+
     <!-- Loot -->
     <section id="loot" class="screen" data-title="Loot">
       <div class="panel loot-hero">
@@ -232,6 +252,7 @@
   <nav class="tab-bar" aria-label="Main">
     <button class="tab active" data-screen="hero"><span class="tab-icon">&#128737;&#xFE0F;</span>Hero</button>
     <button class="tab" data-screen="train"><span class="tab-icon">&#9876;&#xFE0F;</span>Train</button>
+    <button class="tab" data-screen="fight"><span class="tab-icon">&#128128;</span>Fight</button>
     <button class="tab" data-screen="loot"><span class="tab-icon">&#127873;</span>Loot</button>
     <button class="tab" data-screen="journal"><span class="tab-icon">&#128220;</span>Journal</button>
     <button class="tab" data-screen="settings"><span class="tab-icon">&#9978;&#xFE0F;</span>Camp</button>
@@ -253,6 +274,44 @@
     </div>
   </div>
 
+  <!-- Dungeon battle -->
+  <div class="overlay battle" id="battle" hidden>
+    <div class="battle-inner">
+      <div class="battle-top pixel">
+        <span id="b-dungeon"></span>
+        <span id="b-floor"></span>
+        <button type="button" class="flee-btn pixel" id="b-flee">Flee</button>
+      </div>
+
+      <div class="arena">
+        <div class="combatant enemy">
+          <div class="combatant-info">
+            <div class="b-name pixel"><span id="b-enemy-name"></span><span class="b-level" id="b-enemy-level"></span></div>
+            <div class="bar hp-bar"><div class="bar-fill" id="b-enemy-hp"></div></div>
+            <div class="b-numbers" id="b-enemy-hp-text"></div>
+            <div class="b-status" id="b-enemy-status"></div>
+          </div>
+          <div class="b-sprite" id="b-enemy-sprite"></div>
+        </div>
+
+        <div class="combatant hero">
+          <div class="b-sprite" id="b-hero-sprite"></div>
+          <div class="combatant-info">
+            <div class="b-name pixel" id="b-hero-name"></div>
+            <div class="bar hp-bar hero-hp"><div class="bar-fill" id="b-hero-hp"></div></div>
+            <div class="b-numbers">HP <span id="b-hero-hp-text"></span></div>
+            <div class="bar energy-bar"><div class="bar-fill" id="b-energy"></div></div>
+            <div class="b-numbers">EN <span id="b-energy-text"></span></div>
+            <div class="b-status" id="b-hero-status"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="battle-log panel" id="b-log" aria-live="polite"></div>
+      <div class="battle-actions" id="b-actions"></div>
+    </div>
+  </div>
+
   <!-- Level up / quest complete popup -->
   <div class="overlay popup" id="popup" hidden>
     <div class="popup-box panel">
@@ -265,6 +324,7 @@
 
   <div class="toast pixel" id="toast" aria-live="polite"></div>
 
+  <script src="battle.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

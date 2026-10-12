@@ -578,7 +578,7 @@ textarea:focus {
   right: 0;
   bottom: 0;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   height: calc(var(--tab-height) + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   background: var(--panel);
@@ -597,7 +597,7 @@ textarea:focus {
   border: none;
   color: var(--muted);
   font-family: var(--pixel-font);
-  font-size: 0.5rem;
+  font-size: 0.45rem;
   text-transform: uppercase;
   cursor: pointer;
 }
@@ -739,6 +739,374 @@ textarea:focus {
 .skill .workout-info {
   display: flex;
   flex-direction: column;
+}
+
+/* Fight screen */
+.combat-stats {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.cstat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 2px;
+  background: var(--panel-2);
+  border: 2px solid #000;
+  box-shadow: inset 0 0 0 2px var(--border);
+}
+
+.cstat-value {
+  font-size: 0.7rem;
+  color: var(--accent);
+}
+
+.passive {
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+
+.skill.locked .workout-icon {
+  filter: grayscale(1) opacity(0.5);
+}
+
+.skill-state {
+  font-size: 0.8rem;
+  color: var(--gold);
+}
+
+.skill.locked .skill-state {
+  color: var(--muted);
+}
+
+.combat-unlock {
+  margin-top: 10px;
+  padding: 10px;
+  font-size: 0.85rem;
+  border: 2px solid #000;
+  box-shadow: inset 0 0 0 2px var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.dungeon-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dungeon {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--panel-2);
+  border: 2px solid #000;
+  box-shadow: inset 0 0 0 2px var(--border);
+}
+
+.dungeon.cleared {
+  box-shadow: inset 0 0 0 2px var(--success);
+}
+
+.dungeon.locked {
+  opacity: 0.55;
+}
+
+.dungeon-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.dungeon-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.dungeon-name {
+  font-size: 0.6rem;
+  line-height: 1.6;
+  margin-bottom: 2px;
+}
+
+.enter-btn {
+  margin: 0;
+  padding: 12px 10px;
+  font-size: 0.55rem;
+  flex-shrink: 0;
+}
+
+/* Battle */
+.battle {
+  background:
+    radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 60%),
+    linear-gradient(#120f26, #07060f);
+}
+
+.battle-inner {
+  max-width: 560px;
+  min-height: 100%;
+  margin: 0 auto;
+  padding: calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 16px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.battle-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.55rem;
+  color: var(--gold);
+}
+
+.battle-top #b-floor {
+  color: var(--muted);
+  margin-right: auto;
+}
+
+.flee-btn {
+  padding: 8px 10px;
+  background: var(--panel);
+  color: var(--danger);
+  border: 2px solid #000;
+  box-shadow: inset 0 0 0 2px var(--danger);
+  font-size: 0.5rem;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.arena {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.combatant {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.combatant-info {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  background: var(--panel);
+  border: 3px solid #000;
+  box-shadow: inset 0 0 0 2px var(--border), 3px 3px 0 #000;
+}
+
+.b-name {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 0.6rem;
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.b-level {
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.hp-bar {
+  height: 14px;
+}
+
+.hp-bar .bar-fill {
+  background: var(--danger);
+  transition: width 0.35s steps(6);
+}
+
+.hero-hp .bar-fill {
+  background: var(--success);
+}
+
+.energy-bar {
+  height: 10px;
+  margin-top: 6px;
+}
+
+.energy-bar .bar-fill {
+  background: #38bdf8;
+  transition: width 0.35s steps(6);
+}
+
+.b-numbers {
+  font-family: var(--pixel-font);
+  font-size: 0.45rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.b-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.chip {
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+}
+
+.b-sprite {
+  position: relative;
+  width: 104px;
+  height: 104px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+}
+
+.monster-icon {
+  font-size: 4.2rem;
+  line-height: 1;
+  filter: drop-shadow(4px 4px 0 #000);
+}
+
+.monster-icon.boss {
+  font-size: 5rem;
+  filter: drop-shadow(0 0 10px var(--danger)) drop-shadow(4px 4px 0 #000);
+}
+
+.b-sprite.defeated {
+  opacity: 0.2;
+  filter: grayscale(1);
+  transition: opacity 0.6s;
+}
+
+.b-sprite.hit {
+  animation: shake 0.35s steps(4);
+}
+
+@keyframes shake {
+  25% { transform: translateX(-6px); }
+  50% { transform: translateX(6px); }
+  75% { transform: translateX(-3px); }
+}
+
+.floater {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.9rem;
+  color: #fff;
+  text-shadow: 2px 2px 0 #000, -1px -1px 0 #000;
+  pointer-events: none;
+  white-space: nowrap;
+  animation: float-up 1s ease-out forwards;
+}
+
+.floater.crit {
+  color: var(--gold);
+  font-size: 1.15rem;
+}
+
+.floater.hurt {
+  color: var(--danger);
+}
+
+.floater.heal {
+  color: var(--success);
+}
+
+.floater.dot {
+  color: #a3e635;
+}
+
+@keyframes float-up {
+  to { transform: translate(-50%, -48px); opacity: 0; }
+}
+
+.battle-log {
+  min-height: 118px;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.battle-log p + p {
+  margin-top: 3px;
+}
+
+.battle-log .latest {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.battle-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px;
+  background: var(--panel);
+  border: 3px solid #000;
+  box-shadow: inset 0 0 0 2px var(--border), 3px 3px 0 #000;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.action:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: inset 0 0 0 2px var(--border), 1px 1px 0 #000;
+}
+
+.action.skill {
+  box-shadow: inset 0 0 0 2px var(--accent), 3px 3px 0 #000;
+}
+
+.action:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.action.locked {
+  box-shadow: inset 0 0 0 2px var(--border), 3px 3px 0 #000;
+}
+
+.action-name {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.action-sub {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.battle-end {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  box-shadow: inset 0 0 0 3px var(--gold), 4px 4px 0 #000;
+}
+
+.battle-end .btn {
+  width: 100%;
 }
 
 /* Loot */
