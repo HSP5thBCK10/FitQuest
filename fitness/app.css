@@ -19,6 +19,10 @@
   --pixel-font: "Press Start 2P", ui-monospace, monospace;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -610,6 +614,131 @@ textarea:focus {
 
 .tab.active .tab-icon {
   filter: none;
+}
+
+/* Training mode toggle */
+.mode-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 3px solid #000;
+  box-shadow: 4px 4px 0 #000;
+}
+
+.mode {
+  padding: 14px 6px;
+  border: none;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 2px var(--border);
+}
+
+.mode-icon {
+  font-family: system-ui, sans-serif;
+  font-size: 1.1rem;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+.mode.active {
+  background: var(--accent);
+  color: #000;
+  box-shadow: inset 0 -4px 0 rgb(0 0 0 / 0.3), inset 0 3px 0 rgb(255 255 255 / 0.35);
+}
+
+/* Challenges & skills */
+.pips {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.pip {
+  width: 10px;
+  height: 10px;
+  background: #000;
+  box-shadow: inset 0 0 0 2px var(--border);
+}
+
+.pip.on {
+  background: var(--gold);
+  box-shadow: inset 0 -2px 0 rgb(0 0 0 / 0.3);
+}
+
+.challenge-info {
+  padding: 12px;
+  margin-bottom: 8px;
+  background: var(--bg);
+  border: 2px solid #000;
+  box-shadow: inset 0 0 0 2px var(--border);
+}
+
+.pb {
+  font-size: 0.55rem;
+  color: var(--muted);
+  line-height: 1.8;
+  margin-bottom: 10px;
+}
+
+.pb span {
+  color: var(--gold);
+}
+
+.skill-ladder {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.skill-ladder li {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  opacity: 0.75;
+}
+
+.skill-ladder li.learned {
+  opacity: 1;
+}
+
+.skill-ladder .rank {
+  width: 34px;
+  flex-shrink: 0;
+  padding: 6px 0;
+  text-align: center;
+  font-size: 0.55rem;
+  background: var(--panel-2);
+  border: 2px solid #000;
+}
+
+.skill-ladder li.learned .rank {
+  background: var(--gold);
+  color: #000;
+}
+
+.ladder-text {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.85rem;
+}
+
+.ladder-text span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.skill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.skill .workout-info {
+  display: flex;
+  flex-direction: column;
 }
 
 /* Loot */

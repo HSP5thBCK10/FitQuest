@@ -62,6 +62,11 @@
       </div>
 
       <div class="panel">
+        <h2 class="pixel">Skills</h2>
+        <ul class="workout-list" id="skill-list"></ul>
+      </div>
+
+      <div class="panel">
         <h2 class="pixel">Weekly Goal</h2>
         <div class="xp-label"><span id="week-text">0 / 150 min</span><span id="week-pct">0%</span></div>
         <div class="bar week-bar"><div class="bar-fill" id="week-fill"></div></div>
@@ -80,6 +85,11 @@
 
     <!-- Train -->
     <section id="train" class="screen" data-title="Train">
+      <div class="mode-toggle" role="tablist" aria-label="Training mode">
+        <button type="button" class="mode active pixel" data-mode="workout" role="tab" aria-selected="true"><span class="mode-icon" aria-hidden="true">&#9876;&#xFE0F;</span> Workout</button>
+        <button type="button" class="mode pixel" data-mode="challenge" role="tab" aria-selected="false"><span class="mode-icon" aria-hidden="true">&#127942;</span> Challenge</button>
+      </div>
+
       <form id="workout-form" class="panel form" novalidate>
         <label>Choose your training</label>
         <div class="activity-grid" id="activity-grid" role="radiogroup" aria-label="Activity"></div>
@@ -112,6 +122,47 @@
         <div class="reward-preview pixel" id="reward-preview"></div>
         <button type="submit" class="btn pixel">Complete Training</button>
         <p class="form-status" id="form-status" role="status"></p>
+      </form>
+
+      <form id="feat-form" class="panel form" novalidate hidden>
+        <label>Choose a challenge</label>
+        <p class="hint">Hit personal records to learn skills. Each skill rank boosts an attribute.</p>
+        <div class="activity-grid" id="challenge-grid" role="radiogroup" aria-label="Challenge"></div>
+
+        <div class="challenge-info" id="challenge-info" hidden></div>
+
+        <div class="row" id="fields-lift" hidden>
+          <div>
+            <label for="lift-weight">Weight (<span id="weight-unit">kg</span>)</label>
+            <input type="number" id="lift-weight" min="0" step="0.5" inputmode="decimal">
+          </div>
+          <div>
+            <label for="lift-reps">Reps</label>
+            <input type="number" id="lift-reps" min="1" max="30" value="1" inputmode="numeric">
+          </div>
+        </div>
+
+        <div id="fields-reps" hidden>
+          <label for="max-reps">Reps in one set</label>
+          <input type="number" id="max-reps" min="1" inputmode="numeric">
+        </div>
+
+        <div class="row" id="fields-time" hidden>
+          <div>
+            <label for="time-min">Minutes</label>
+            <input type="number" id="time-min" min="0" inputmode="numeric">
+          </div>
+          <div>
+            <label for="time-sec">Seconds</label>
+            <input type="number" id="time-sec" min="0" max="59" inputmode="numeric">
+          </div>
+        </div>
+
+        <label for="feat-date">Date</label>
+        <input type="date" id="feat-date" name="feat-date">
+
+        <button type="submit" class="btn pixel">Record Feat</button>
+        <p class="form-status" id="feat-status" role="status"></p>
       </form>
     </section>
 
@@ -155,7 +206,13 @@
         <label for="goal">Weekly goal (minutes)</label>
         <input type="number" id="goal" min="10" max="5000" inputmode="numeric">
 
-        <label for="weight">Body weight (kg)</label>
+        <label for="units">Units</label>
+        <select id="units">
+          <option value="kg">Kilograms (kg)</option>
+          <option value="lb">Pounds (lb)</option>
+        </select>
+
+        <label for="weight" id="weight-label">Body weight (kg)</label>
         <input type="number" id="weight" min="20" max="300" step="0.1" inputmode="decimal">
         <p class="hint">Used to estimate calories burned.</p>
 

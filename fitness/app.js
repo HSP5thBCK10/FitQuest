@@ -341,9 +341,68 @@ const BADGES = [
   { id: "lvl5", icon: "⭐", name: "Rising Hero", desc: "Reach level 5", check: (c) => [c.level, 5] },
   { id: "lvl10", icon: "🌟", name: "Champion", desc: "Reach level 10", check: (c) => [c.level, 10] },
   { id: "lvl20", icon: "💫", name: "Legend", desc: "Reach level 20", check: (c) => [c.level, 20] },
+  { id: "pr", icon: "📈", name: "Personal Best", desc: "Record your first challenge", check: (c) => [c.feats, 1] },
+  { id: "skills5", icon: "📖", name: "Skilled", desc: "Learn 5 skills", check: (c) => [c.skills, 5] },
+  { id: "mastery", icon: "🥋", name: "Grandmaster", desc: "Reach rank III in any skill", check: (c) => [c.maxRank, 3] },
 ];
 
 const badgeById = (id) => BADGES.find((b) => b.id === id);
+
+// ---------- Challenges & skills ----------
+
+// Kinds: "lift" (weight x reps, ranked by estimated 1-rep max relative to
+// bodyweight), "reps" (max reps), "run" (time for a distance, lower is better)
+// and "hold" (time held, higher is better). Each challenge teaches 3 skill ranks.
+const CHALLENGES = {
+  bench: { name: "Bench Press", icon: "🏋️", kind: "lift", stat: "STR", tiers: [0.75, 1, 1.5],
+    skills: ["Shield Push", "Iron Bulwark", "Titan's Press"] },
+  squat: { name: "Squat", icon: "🦵", kind: "lift", stat: "STR", tiers: [1, 1.5, 2],
+    skills: ["Stone Legs", "Earthshaker", "Mountain Stance"] },
+  deadlift: { name: "Deadlift", icon: "🪨", kind: "lift", stat: "STR", tiers: [1.25, 1.75, 2.5],
+    skills: ["Grave Lift", "Ogre Grip", "World Lifter"] },
+  ohp: { name: "Overhead Press", icon: "🙌", kind: "lift", stat: "STR", tiers: [0.5, 0.75, 1],
+    skills: ["Overhead Strike", "Sky Splitter", "Heaven's Hammer"] },
+  pullups: { name: "Pull-ups", icon: "🧗", kind: "reps", stat: "STR", tiers: [5, 10, 20],
+    skills: ["Wall Climber", "Rope Ascent", "Spider Grip"] },
+  pushups: { name: "Push-ups", icon: "💪", kind: "reps", stat: "STR", tiers: [20, 40, 60],
+    skills: ["Battle Ready", "Iron Arms", "Hundred Fists"] },
+  mile: { name: "Mile Run", icon: "🏃", kind: "run", stat: "AGI", tiers: [600, 480, 360],
+    skills: ["Quickstep", "Wind Walker", "Shadow Sprint"] },
+  fivek: { name: "5K Run", icon: "🏁", kind: "run", stat: "AGI", tiers: [2100, 1680, 1320],
+    skills: ["Pathfinder", "Swift Courier", "Phantom Stride"] },
+  plank: { name: "Plank Hold", icon: "🧱", kind: "hold", stat: "VIT", tiers: [60, 120, 240],
+    skills: ["Stone Skin", "Iron Core", "Unbreakable"] },
+  meditation: { name: "Meditation Sit", icon: "🪷", kind: "hold", stat: "WIS", tiers: [600, 1200, 2700],
+    skills: ["Calm Mind", "Inner Sight", "Transcendence"] },
+};
+
+const RANKS = ["I", "II", "III"];
+const RANK_XP = [100, 200, 400]; // one-time reward for learning each rank
+const RANK_STATS = [3, 5, 8]; // attribute points each rank grants
+const PR_XP = 30; // reward for beating your previous best
+
+function e1rm(weight, reps) {
+  return reps <= 1 ? weight : weight * (1 + reps / 30);
+}
+
+// Score used for personal records: absolute, so bodyweight changes don't matter
+function prScore(f) {
+  return CHALLENGES[f.challenge].kind === "lift" ? e1rm(f.weight, f.reps) : f.value;
+}
+
+// Score used for skill ranks: lifts are relative to bodyweight at the time
+function rankScore(f) {
+  return CHALLENGES[f.challenge].kind === "lift" ? e1rm(f.weight, f.reps) / f.bw : f.value;
+}
+
+function isBetter(chId, a, b) {
+  return CHALLENGES[chId].kind === "run" ? a < b : a > b;
+}
+
+function rankFor(chId, score) {
+  const ch = CHALLENGES[chId];
+  return ch.tiers.filter((t) => (ch.kind === "run" ? score <= t : score >= t)).length;
+}
 
 // ---------- Storage ----------
 
@@ -351,7 +410,8 @@ const STORAGE_KEY = "fittrack.workouts";
 const SETTINGS_KEY = "fittrack.settings";
 const QUESTS_KEY = "fittrack.quests";
 const UNLOCKS_KEY = "fittrack.unlocks";
-const DEFAULT_SETTINGS = { goal: 150, weight: 70, cls: null, heroName: "", gear: {} };
+const FEATS_KEY = "fittrack.feats";
+const DEFAULT_SETTINGS = { goal: 150, weight: 70, units: "kg", cls: null, heroName: "", gear: {} };
 
 function load(key, fallback) {
   try {
@@ -374,12 +434,40 @@ let workouts = load(STORAGE_KEY, []);
 let settings = { ...DEFAULT_SETTINGS, ...load(SETTINGS_KEY, {}) };
 // Completed daily quests: { date, id, xp }
 let questAwards = load(QUESTS_KEY, []);
+// Challenge results: { id, challenge, date, weight (kg), reps, value, bw, xp }
+// (xp is the personal-record bonus; skill-rank XP is derived from ranks held)
+let feats = load(FEATS_KEY, []);
 // Badges and gear the player has already been told about
 let seen = { badges: [], gear: [], ...load(UNLOCKS_KEY, {}) };
 
 function persist() {
   save(STORAGE_KEY, workouts);
   save(QUESTS_KEY, questAwards);
+  save(FEATS_KEY, feats);
+}
+
+// ---------- Units ----------
+
+const LB_PER_KG = 2.20462;
+
+function toDisplayWeight(kg) {
+  return settings.units === "lb" ? Math.round(kg * LB_PER_KG) : Math.round(kg * 10) / 10;
+}
+
+function fromDisplayWeight(value) {
+  return settings.units === "lb" ? value / LB_PER_KG : value;
+}
+
+function fmtWeight(kg) {
+  return `${toDisplayWeight(kg)} ${settings.units}`;
+}
+
+function fmtTime(seconds) {
+  const s = Math.round(seconds);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = String(s % 60).padStart(2, "0");
+  return h ? `${h}:${String(m).padStart(2, "0")}:${sec}` : `${m}:${sec}`;
 }
 
 // ---------- Date helpers ----------
@@ -456,7 +544,50 @@ function workoutsOn(key) {
 }
 
 function totalXp() {
-  return sumBy(workouts, "xp") + sumBy(questAwards, "xp");
+  return sumBy(workouts, "xp") + sumBy(questAwards, "xp") + sumBy(feats, "xp") + skillXp();
+}
+
+function skillXp() {
+  return learnedSkills().reduce((total, s) => total + RANK_XP.slice(0, s.rank).reduce((a, b) => a + b, 0), 0);
+}
+
+function featsFor(chId, list = feats) {
+  return list.filter((f) => f.challenge === chId);
+}
+
+function bestFeat(chId, list = feats) {
+  return featsFor(chId, list).reduce(
+    (best, f) => (!best || isBetter(chId, prScore(f), prScore(best)) ? f : best),
+    null
+  );
+}
+
+function skillRank(chId, list = feats) {
+  return Math.max(0, ...featsFor(chId, list).map((f) => rankFor(chId, rankScore(f))));
+}
+
+function learnedSkills() {
+  return Object.keys(CHALLENGES)
+    .map((chId) => ({ chId, rank: skillRank(chId) }))
+    .filter((s) => s.rank > 0);
+}
+
+function featText(f) {
+  const ch = CHALLENGES[f.challenge];
+  if (ch.kind === "lift") {
+    const est = f.reps > 1 ? ` (est. max ${fmtWeight(e1rm(f.weight, f.reps))})` : "";
+    return `${fmtWeight(f.weight)} × ${f.reps}${est}`;
+  }
+  return ch.kind === "reps" ? `${f.value} reps` : fmtTime(f.value);
+}
+
+function tierText(chId, i) {
+  const ch = CHALLENGES[chId];
+  const t = ch.tiers[i];
+  if (ch.kind === "lift") return `Max ${t}× bodyweight (${fmtWeight(t * settings.weight)})`;
+  if (ch.kind === "reps") return `${t} reps in one set`;
+  if (ch.kind === "run") return `Run it in ${fmtTime(t)} or less`;
+  return `Hold for ${fmtTime(t)}`;
 }
 
 // Reaching level L takes 50 * (L-1) * L total XP: 100, 300, 600, 1000...
@@ -564,6 +695,9 @@ function badgeContext() {
     activityTypes: new Set(workouts.map((w) => w.type)).size,
     statMinutes,
     level: levelInfo(totalXp()).level,
+    feats: feats.length,
+    skills: learnedSkills().reduce((total, s) => total + s.rank, 0),
+    maxRank: Math.max(0, ...learnedSkills().map((s) => s.rank)),
   };
 }
 
@@ -642,6 +776,23 @@ function workoutItem(w) {
     </li>`;
 }
 
+function pips(rank) {
+  return RANKS.map((_, i) => `<span class="pip ${i < rank ? "on" : ""}"></span>`).join("");
+}
+
+function featItem(f) {
+  const ch = CHALLENGES[f.challenge];
+  return `
+    <li class="workout">
+      <div class="workout-icon" aria-hidden="true">${ch.icon}</div>
+      <div class="workout-info">
+        <div class="workout-name">${ch.name}${f.xp ? `<span class="workout-xp">+${f.xp} XP</span>` : ""}</div>
+        <div class="workout-meta">🏆 ${featText(f)}</div>
+      </div>
+      <button class="delete-btn" data-feat="${f.id}" aria-label="Delete ${ch.name} record">&#10005;</button>
+    </li>`;
+}
+
 function renderHero() {
   const cls = CLASSES[settings.cls];
   const now = new Date();
@@ -683,6 +834,28 @@ function renderHero() {
     const minutes = sumBy(workouts.filter((w) => activityOf(w).stat === stat), "duration");
     values[stat] = cls.base[stat] + Math.floor(minutes / 15);
   }
+  // Skills grant extra attribute points
+  const skills = learnedSkills();
+  for (const { chId, rank } of skills) {
+    values[CHALLENGES[chId].stat] += RANK_STATS.slice(0, rank).reduce((a, b) => a + b, 0);
+  }
+  $("skill-list").innerHTML = skills.length
+    ? skills
+        .map(({ chId, rank }) => {
+          const ch = CHALLENGES[chId];
+          const points = RANK_STATS.slice(0, rank).reduce((a, b) => a + b, 0);
+          return `
+            <li class="skill">
+              <span class="workout-icon" aria-hidden="true">${ch.icon}</span>
+              <span class="workout-info">
+                <span class="workout-name">${ch.skills[rank - 1]}</span>
+                <span class="workout-meta">${ch.name} · Rank ${RANKS[rank - 1]} · +${points} ${ch.stat}</span>
+              </span>
+              <span class="pips">${pips(rank)}</span>
+            </li>`;
+        })
+        .join("")
+    : `<li class="empty-state">Complete challenges in <strong>Train</strong> to learn skills.</li>`;
   const maxValue = Math.max(20, ...Object.values(values));
   const isWarrior = settings.cls === "warrior";
   $("attributes").innerHTML = Object.entries(STATS)
@@ -737,13 +910,14 @@ function renderJournal() {
     <div class="stat"><span class="stat-value pixel">${Math.round(sumBy(workouts, "duration") / 60)}</span><span class="stat-label">hours</span></div>
     <div class="stat"><span class="stat-value pixel">${totalXp().toLocaleString()}</span><span class="stat-label">total XP</span></div>`;
 
-  if (!workouts.length) {
+  if (!workouts.length && !feats.length) {
     $("history-list").innerHTML = `<div class="panel empty-state">Your legend begins with your first workout.</div>`;
     return;
   }
 
   const byDay = {};
   for (const w of workouts) (byDay[w.date] ||= []).push(w);
+  for (const f of feats) (byDay[f.date] ||= []).push(f);
   $("history-list").innerHTML = Object.keys(byDay)
     .sort()
     .reverse()
@@ -753,7 +927,9 @@ function renderJournal() {
       return `
       <div class="history-day">
         <h3>${formatDay(key)} · ${sumBy(byDay[key], "duration")} min${quest ? ` · ✔ ${quest.name}` : ""}</h3>
-        <div class="panel"><ul class="workout-list">${byDay[key].map(workoutItem).join("")}</ul></div>
+        <div class="panel"><ul class="workout-list">${byDay[key]
+          .map((item) => (item.challenge ? featItem(item) : workoutItem(item)))
+          .join("")}</ul></div>
       </div>`;
     })
     .join("");
@@ -852,6 +1028,7 @@ function render() {
   renderJournal();
   renderSettings();
   renderLoot();
+  renderChallenges();
 }
 
 // ---------- Feedback ----------
@@ -958,6 +1135,7 @@ $("begin-btn").addEventListener("click", () => {
   $("class-select").hidden = true;
   renderActivities();
   resetForm();
+  resetFeatForm();
   render();
   showScreen("hero");
   const c = CLASSES[pickedClass];
@@ -1058,6 +1236,11 @@ form.addEventListener("submit", (event) => {
   if (completed) {
     popup("📜", "Quest Complete!", `${completed.name}: +${completed.xp} bonus XP`);
   }
+  celebrate(levelBefore, unlocks);
+});
+
+// Level-up, badge and gear popups shared by workouts and challenges
+function celebrate(levelBefore, unlocks) {
   const levelAfter = levelInfo(totalXp()).level;
   if (levelAfter > levelBefore) {
     const newTitle = titleFor(settings.cls, levelAfter);
@@ -1078,6 +1261,153 @@ form.addEventListener("submit", (event) => {
       `${g.name} unlocked${g.xp ? ` (+${g.xp}% XP)` : ""}. Equip it in Loot.`
     );
   }
+}
+
+// ---------- Challenges ----------
+
+const featForm = $("feat-form");
+
+function showMode(mode) {
+  document.querySelectorAll(".mode").forEach((b) => {
+    b.classList.toggle("active", b.dataset.mode === mode);
+    b.setAttribute("aria-selected", b.dataset.mode === mode);
+  });
+  form.hidden = mode !== "workout";
+  featForm.hidden = mode !== "challenge";
+}
+
+document.querySelectorAll(".mode").forEach((b) => b.addEventListener("click", () => showMode(b.dataset.mode)));
+
+function selectedChallenge() {
+  return $("challenge-grid").dataset.value || "";
+}
+
+function renderChallenges() {
+  const selected = selectedChallenge();
+  $("challenge-grid").innerHTML = Object.entries(CHALLENGES)
+    .map(([id, ch]) => {
+      const best = bestFeat(id);
+      return `
+        <button type="button" class="activity ${id === selected ? "selected" : ""}" data-value="${id}"
+          role="radio" aria-checked="${id === selected}">
+          <span class="activity-icon" aria-hidden="true">${ch.icon}</span>
+          <span>${ch.name}</span>
+          <span class="pips">${pips(skillRank(id))}</span>
+          <span class="activity-stat">${best ? featText(best).replace(/ \(.*\)/, "") : "No record"}</span>
+        </button>`;
+    })
+    .join("");
+
+  const ch = CHALLENGES[selected];
+  $("challenge-info").hidden = !ch;
+  ["lift", "reps", "time"].forEach((k) => ($(`fields-${k}`).hidden = true));
+  if (!ch) return;
+  $(`fields-${ch.kind === "run" || ch.kind === "hold" ? "time" : ch.kind}`).hidden = false;
+  $("weight-unit").textContent = settings.units;
+
+  const rank = skillRank(selected);
+  const best = bestFeat(selected);
+  $("challenge-info").innerHTML = `
+    <div class="pb pixel">Personal best: <span>${best ? featText(best) : "none yet"}</span></div>
+    <ol class="skill-ladder">
+      ${ch.skills
+        .map(
+          (name, i) => `
+          <li class="${i < rank ? "learned" : ""}">
+            <span class="rank pixel">${RANKS[i]}</span>
+            <span class="ladder-text">
+              <strong>${i < rank ? "✔ " : ""}${name}</strong>
+              <span>${tierText(selected, i)} · +${RANK_STATS[i]} ${ch.stat} · +${RANK_XP[i]} XP</span>
+            </span>
+          </li>`
+        )
+        .join("")}
+    </ol>
+    ${ch.kind === "lift" ? `<p class="hint">Lift ranks compare your estimated one-rep max to your body weight (set in Camp).</p>` : ""}`;
+}
+
+$("challenge-grid").addEventListener("click", (event) => {
+  const tile = event.target.closest(".activity");
+  if (!tile) return;
+  $("challenge-grid").dataset.value = tile.dataset.value;
+  renderChallenges();
+});
+
+function resetFeatForm() {
+  featForm.reset();
+  featForm["feat-date"].value = toKey(new Date());
+  featForm["feat-date"].max = toKey(new Date());
+  renderChallenges();
+}
+
+featForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const status = $("feat-status");
+  status.className = "form-status";
+  const fail = (msg) => {
+    status.textContent = msg;
+    status.classList.add("error");
+  };
+
+  const chId = selectedChallenge();
+  const ch = CHALLENGES[chId];
+  if (!ch) return fail("Choose a challenge.");
+  const date = featForm["feat-date"].value;
+  if (!date) return fail("Choose a date.");
+
+  const feat = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), challenge: chId, date, bw: settings.weight };
+  if (ch.kind === "lift") {
+    const weight = fromDisplayWeight(Number(featForm["lift-weight"].value));
+    const reps = Math.round(Number(featForm["lift-reps"].value));
+    if (!(weight > 0 && weight <= 600)) return fail("Enter the weight you lifted.");
+    if (!(reps >= 1 && reps <= 30)) return fail("Reps must be between 1 and 30.");
+    feat.weight = Math.round(weight * 100) / 100;
+    feat.reps = reps;
+    feat.value = feat.weight;
+  } else if (ch.kind === "reps") {
+    const reps = Math.round(Number(featForm["max-reps"].value));
+    if (!(reps >= 1 && reps <= 1000)) return fail("Enter how many reps you did.");
+    feat.value = reps;
+  } else {
+    const seconds = Math.round(Number(featForm["time-min"].value || 0) * 60 + Number(featForm["time-sec"].value || 0));
+    if (!(seconds > 0 && seconds < 24 * 3600)) return fail("Enter a time.");
+    if (Number(featForm["time-sec"].value) >= 60) return fail("Seconds must be under 60.");
+    feat.value = seconds;
+  }
+
+  const levelBefore = levelInfo(totalXp()).level;
+  const previous = bestFeat(chId);
+  const isPR = !previous || isBetter(chId, prScore(feat), prScore(previous));
+  const rankBefore = skillRank(chId);
+  const rankAfter = Math.max(rankBefore, rankFor(chId, rankScore(feat)));
+  feat.xp = isPR ? PR_XP : 0;
+
+  feats.push(feat);
+  persist();
+  const unlocks = syncUnlocks();
+  render();
+  resetFeatForm();
+  $("challenge-grid").dataset.value = chId;
+  renderChallenges();
+  status.textContent = "";
+
+  if (isPR) {
+    popup(
+      ch.icon,
+      previous ? "New Personal Record!" : "Record Set!",
+      `${ch.name}: ${featText(feat)}${previous ? ` (old best: ${featText(previous)})` : ""}. +${PR_XP} XP`
+    );
+  } else {
+    toast(`Logged. Best is still ${featText(previous).replace(/ \(.*\)/, "")}`);
+  }
+  for (let i = rankBefore; i < rankAfter; i++) {
+    popup(
+      ch.icon,
+      "Skill Learned!",
+      `${ch.skills[i]} (Rank ${RANKS[i]}): +${RANK_STATS[i]} ${ch.stat}, +${RANK_XP[i]} XP`
+    );
+  }
+  celebrate(levelBefore, unlocks);
 });
 
 // ---------- Loot ----------
@@ -1098,6 +1428,14 @@ $("gear-slots").addEventListener("click", (event) => {
 document.addEventListener("click", (event) => {
   const btn = event.target.closest(".delete-btn");
   if (!btn) return;
+  if (btn.dataset.feat) {
+    if (!confirm("Delete this record? Its XP, and any skill it earned, will be removed.")) return;
+    feats = feats.filter((f) => f.id !== btn.dataset.feat);
+    persist();
+    syncUnlocks();
+    render();
+    return;
+  }
   if (!confirm("Delete this workout? Its XP will be removed.")) return;
   const removed = workouts.find((w) => w.id === btn.dataset.id);
   workouts = workouts.filter((w) => w !== removed);
@@ -1111,17 +1449,33 @@ document.addEventListener("click", (event) => {
 
 const settingsForm = $("settings-form");
 settingsForm.goal.value = settings.goal;
-settingsForm.weight.value = settings.weight;
+settingsForm.units.value = settings.units;
+
+function showWeightSetting() {
+  $("weight-label").textContent = `Body weight (${settings.units})`;
+  settingsForm.weight.value = toDisplayWeight(settings.weight);
+}
+showWeightSetting();
+
+// Switching units converts the number already in the box
+settingsForm.units.addEventListener("change", () => {
+  const kg = fromDisplayWeight(Number(settingsForm.weight.value));
+  settings.units = settingsForm.units.value;
+  save(SETTINGS_KEY, settings);
+  if (kg > 0) settingsForm.weight.value = toDisplayWeight(kg);
+  $("weight-label").textContent = `Body weight (${settings.units})`;
+  render();
+});
 
 settingsForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const status = $("settings-status");
   const goal = Math.round(Number(settingsForm.goal.value));
-  const weight = Number(settingsForm.weight.value);
+  const weight = Math.round(fromDisplayWeight(Number(settingsForm.weight.value)) * 10) / 10;
   status.className = "form-status";
 
   if (!(goal >= 10 && goal <= 5000) || !(weight >= 20 && weight <= 300)) {
-    status.textContent = "Goal must be 10–5000 min and weight 20–300 kg.";
+    status.textContent = `Goal must be 10–5000 min and weight ${fmtWeight(20)}–${fmtWeight(300)}.`;
     status.classList.add("error");
     return;
   }
@@ -1134,7 +1488,7 @@ settingsForm.addEventListener("submit", (event) => {
 });
 
 $("export-btn").addEventListener("click", () => {
-  const data = { settings, workouts, questAwards, unlocks: seen };
+  const data = { settings, workouts, questAwards, feats, unlocks: seen };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
@@ -1144,9 +1498,10 @@ $("export-btn").addEventListener("click", () => {
 });
 
 $("clear-btn").addEventListener("click", () => {
-  if (!confirm("Delete ALL workouts, XP, levels, badges and gear? This cannot be undone.")) return;
+  if (!confirm("Delete ALL workouts, records, XP, levels, skills, badges and gear? This cannot be undone.")) return;
   workouts = [];
   questAwards = [];
+  feats = [];
   persist();
   syncUnlocks();
   render();
@@ -1171,6 +1526,7 @@ syncUnlocks();
 if (settings.cls) {
   renderActivities();
   resetForm();
+  resetFeatForm();
   render();
 } else {
   applyTheme();
