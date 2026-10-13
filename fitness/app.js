@@ -56,7 +56,8 @@ const CLASSES = {
     bonus: { AGI: 2 },
     bonusText: "2× XP on Agility training",
     base: { STR: 4, AGI: 8, WIS: 4, VIT: 4 },
-    titles: ["Pickpocket", "Shadow", "Blade", "Nightstalker", "Phantom", "Master Assassin", "Ghost", "Living Legend"],
+    titles: ["Pickpocket", "Shadow", "Blade", "Nightstalker", "Specter", "Master Assassin", "Ghost", "Living Legend"],
+    promotion: "phantom",
     quests: [
       { id: "a1", name: "Swift Shadow", desc: "Train Agility for 30 minutes", stat: "AGI", minutes: 30, xp: 60 },
       { id: "a2", name: "Into the Night", desc: "Train Agility for 45 minutes", stat: "AGI", minutes: 45, xp: 90 },
@@ -157,6 +158,17 @@ Object.assign(CLASSES, {
     bonus: { STR: 1.75, AGI: 1.75, WIS: 1.75, VIT: 1.75 },
     bonusText: "1.75× XP on all training",
     titles: ["Arena Fodder", "Pit Fighter", "Bloodsport Brawler", "Crowd Favorite", "Arena Champion", "Grand Champion", "Colossus", "Undying Legend"],
+  },
+  phantom: {
+    name: "Phantom",
+    from: "assassin",
+    color: "#67e8f9",
+    body: "Lean, fast & unseen",
+    tagline: "More shadow than flesh. Your speed and endurance have become supernatural.",
+    focus: "Running, HIIT, cycling, sports and bodyweight work",
+    bonus: { AGI: 2.5 },
+    bonusText: "2.5× XP on Agility training",
+    titles: ["Shade", "Wisp", "Veilwalker", "Night Terror", "Wraith", "Phantom Lord", "Unseen One", "Living Myth"],
   },
   paladin: {
     name: "Paladin",
@@ -321,6 +333,7 @@ const SPRITE_RECOLORS = {
   chieftain: { m: "#facc15", w: "#fef3c7", f: "#f5f5f4", b: "#991b1b" }, // gold helm, white wolf pelt
   master: { o: "#f8fafc", O: "#cbd5e1", r: "#facc15", y: "#fde047" }, // white robe, gold sash
   gladiator: { m: "#d97706", M: "#92400e", b: "#dc2626", B: "#7f1d1d" }, // bronze helm, red tunic
+  phantom: { c: "#3b4a6e", C: "#94a8d8", g: "#67e8f9", a: "#a5f3fc", b: "#1e293b" }, // pale ghostly cloak, glowing eyes
   paladin: { a: "#fefce8", m: "#facc15", t: "#f8fafc", T: "#f8fafc", p: "#fde047" }, // gold and white plate
 };
 

@@ -118,6 +118,8 @@ const ULTIMATE_SKILLS = {
     desc: "6 strikes of 35% damage that ignore armor", effect: { damage: 0.35, hits: 6, pierce: true } },
   gladiator: { id: "arena_fury", name: "Arena Fury", icon: "🏟️", challenge: "pullups", cost: 50, ultimate: true,
     desc: "3 heavy blows of 90% damage with +20% crit chance", effect: { damage: 0.9, hits: 3, crit: 20 } },
+  phantom: { id: "death_mark", name: "Death Mark", icon: "💀", challenge: "squat", cost: 55, ultimate: true,
+    desc: "180% damage that always lands a critical hit", effect: { damage: 1.8, crit: 100 } },
   paladin: { id: "holy_light", name: "Holy Light", icon: "🌟", challenge: "meditation", cost: 50, ultimate: true,
     desc: "Heal 20% of max HP and +30% armor for 2 turns", effect: { heal: 0.2, buff: { def: 0.3, turns: 2 } } },
 };
@@ -131,6 +133,7 @@ const CLASS_PASSIVES = {
   chieftain: "Warchief: +25% max HP, +5% power, muscle (STR) adds to HP, and heal 20% of damage dealt",
   master: "Enlightenment: heal 3.5% HP every turn, +5% dodge and +5% power",
   gladiator: "Arena Champion: +25% damage, +15% armor and +8% crit chance",
+  phantom: "Wraith: +15% crit chance, +5% dodge and +5% power",
   paladin: "Divine Endurance: +25% max HP, +15% armor, and power from STR and VIT",
 };
 
@@ -142,6 +145,7 @@ const COMBAT_PROFILES = {
   barbarian: { primary: (a) => a.STR, toughness: muscle, hp: 1.2, lifesteal: 0.15 },
   chieftain: { primary: (a) => a.STR, toughness: muscle, hp: 1.25, pow: 1.05, lifesteal: 0.2 },
   assassin: { primary: (a) => a.AGI, crit: 10 },
+  phantom: { primary: (a) => a.AGI, pow: 1.05, crit: 15, dodge: 5 },
   monk: { primary: (a) => a.WIS, regen: 0.03 },
   master: { primary: (a) => a.WIS, pow: 1.05, dodge: 5, regen: 0.035 },
   warrior: { primary: balanced, pow: 1.15, def: 1.15 },
