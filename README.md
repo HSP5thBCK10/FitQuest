@@ -54,6 +54,22 @@ On first launch you choose a class (you can change it later in **Camp**):
 | **Warrior**   | Regular physique       | A balanced mix of everything           | 1.5× XP on all training |
 | **Knight**    | Strong & enduring      | Endurance, stamina & functional strength | 1.75× XP on Strength and Vitality |
 
+### Class promotions
+
+At **level 10**, four classes can be promoted from the Hero screen. A promotion keeps
+your progress and adds a stronger XP bonus, an upgraded passive, an exclusive
+**Ultimate** combat skill, new titles and upgraded armor on your sprite.
+
+| Base class | Promotes to   | XP bonus                       | Ultimate skill (grows with this challenge) |
+| ---------- | ------------- | ------------------------------ | ------------------------------------------ |
+| Barbarian  | **Chieftain** | 2.5× Strength                  | Warlord's Roar: heal 15% and +50% damage (overhead press) |
+| Monk       | **Master**    | 2.5× Wisdom                    | Thousand Palms: 6 armor-piercing strikes (push-ups) |
+| Warrior    | **Gladiator** | 1.75× everything               | Arena Fury: 3 heavy blows with +20% crit (pull-ups) |
+| Knight     | **Paladin**   | 2× Strength and Vitality       | Holy Light: heal 20% and +30% armor (meditation) |
+
+Picking your base class again in **Camp** keeps your promotion; switching to a different
+class means promoting that one separately.
+
 ## How the game works
 
 - **XP:** every minute of training earns 2 XP, multiplied by your class bonus
@@ -168,5 +184,5 @@ The app must be served over HTTPS to install. The easiest free option is GitHub 
 | `manifest.json`    | Makes the app installable                   |
 | `icons/`, `fonts/` | App icons and the Press Start 2P pixel font (OFL) |
 
-When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v8`) so installed
+When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v9`) so installed
 copies pick up the update.

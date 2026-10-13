@@ -222,6 +222,56 @@ main {
   color: var(--success);
 }
 
+/* Class promotion */
+.promotion-card {
+  box-shadow: inset 0 0 0 2px var(--border), 4px 4px 0 #000;
+}
+
+.promotion-card.ready {
+  box-shadow: inset 0 0 0 3px var(--gold), 4px 4px 0 #000;
+  animation: glow 1.6s steps(4) infinite alternate;
+}
+
+@keyframes glow {
+  to { box-shadow: inset 0 0 0 3px var(--gold), 0 0 18px color-mix(in srgb, var(--gold) 45%, transparent), 4px 4px 0 #000; }
+}
+
+.promo-sprites {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 4px 0 12px;
+}
+
+.promo-sprites .portrait {
+  width: 84px;
+  height: 84px;
+  padding: 6px;
+}
+
+.promotion-card:not(.ready) .promo-target {
+  filter: grayscale(0.6) brightness(0.7);
+}
+
+.promo-target {
+  box-shadow: inset 0 0 0 3px var(--c);
+}
+
+.promo-arrow {
+  color: var(--gold);
+  font-size: 1rem;
+}
+
+.promo-perks {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+}
+
 /* Stats */
 .stats {
   display: grid;
@@ -1074,6 +1124,19 @@ textarea:focus {
 
 .action.skill {
   box-shadow: inset 0 0 0 2px var(--accent), 3px 3px 0 #000;
+}
+
+.action.ultimate {
+  box-shadow: inset 0 0 0 2px var(--gold), 3px 3px 0 #000;
+  background: color-mix(in srgb, var(--gold) 12%, var(--panel));
+}
+
+.ult-tag {
+  padding: 2px 4px;
+  font-size: 0.42rem;
+  vertical-align: middle;
+  background: var(--gold);
+  color: #000;
 }
 
 .action:disabled {

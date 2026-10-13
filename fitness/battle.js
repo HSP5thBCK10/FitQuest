@@ -109,12 +109,45 @@ const CLASS_SKILLS = {
   ],
 };
 
+// Each promoted class gains one exclusive ultimate skill. It unlocks with the
+// promotion itself and grows stronger with ranks in its challenge.
+const ULTIMATE_SKILLS = {
+  chieftain: { id: "warlords_roar", name: "Warlord's Roar", icon: "🦁", challenge: "ohp", cost: 45, ultimate: true,
+    desc: "Heal 15% of max HP and +50% damage for 3 turns", effect: { heal: 0.15, buff: { atk: 0.5, turns: 3 } } },
+  master: { id: "thousand_palms", name: "Thousand Palms", icon: "🙏", challenge: "pushups", cost: 50, ultimate: true,
+    desc: "6 strikes of 35% damage that ignore armor", effect: { damage: 0.35, hits: 6, pierce: true } },
+  gladiator: { id: "arena_fury", name: "Arena Fury", icon: "🏟️", challenge: "pullups", cost: 50, ultimate: true,
+    desc: "3 heavy blows of 90% damage with +20% crit chance", effect: { damage: 0.9, hits: 3, crit: 20 } },
+  paladin: { id: "holy_light", name: "Holy Light", icon: "🌟", challenge: "meditation", cost: 50, ultimate: true,
+    desc: "Heal 20% of max HP and +30% armor for 2 turns", effect: { heal: 0.2, buff: { def: 0.3, turns: 2 } } },
+};
+
 const CLASS_PASSIVES = {
   barbarian: "Bloodlust: +20% max HP, muscle (STR) adds to HP, and heal 15% of damage dealt",
   assassin: "Killer Instinct: +10% crit chance",
   monk: "Inner Peace: heal 3% HP every turn",
   warrior: "Veteran: +15% damage and +15% armor",
   knight: "Endurance: +20% max HP, +10% armor, and power from both STR and VIT",
+  chieftain: "Warchief: +25% max HP, +5% power, muscle (STR) adds to HP, and heal 20% of damage dealt",
+  master: "Enlightenment: heal 3.5% HP every turn, +5% dodge and +5% power",
+  gladiator: "Arena Champion: +25% damage, +15% armor and +8% crit chance",
+  paladin: "Divine Endurance: +25% max HP, +15% armor, and power from STR and VIT",
+};
+
+// How each class turns attributes into battle stats (multipliers default to 1)
+const balanced = (a) => ((a.STR + a.AGI + a.WIS + a.VIT) / 4) * 1.3;
+const strAndVit = (a) => (a.STR + a.VIT) * 0.5;
+const muscle = (a) => a.VIT + a.STR * 0.5; // a barbarian's muscle mass counts toward health
+const COMBAT_PROFILES = {
+  barbarian: { primary: (a) => a.STR, toughness: muscle, hp: 1.2, lifesteal: 0.15 },
+  chieftain: { primary: (a) => a.STR, toughness: muscle, hp: 1.25, pow: 1.05, lifesteal: 0.2 },
+  assassin: { primary: (a) => a.AGI, crit: 10 },
+  monk: { primary: (a) => a.WIS, regen: 0.03 },
+  master: { primary: (a) => a.WIS, pow: 1.05, dodge: 5, regen: 0.035 },
+  warrior: { primary: balanced, pow: 1.15, def: 1.15 },
+  gladiator: { primary: balanced, pow: 1.25, def: 1.15, crit: 8 },
+  knight: { primary: strAndVit, hp: 1.2, def: 1.1 },
+  paladin: { primary: strAndVit, hp: 1.25, def: 1.15 },
 };
 
 const FLOOR_LEVELS = [0, 0, 1];
@@ -147,15 +180,23 @@ function dungeonUnlocked(index) {
 
 // ---------- Hero combat stats ----------
 
+// A class's 5 skills plus its promotion's ultimate (if it has one)
+function classSkillList(cls) {
+  const base = baseClass(cls);
+  const ultimate = ULTIMATE_SKILLS[CLASSES[base].promotion];
+  return ultimate ? [...CLASS_SKILLS[base], ultimate] : CLASS_SKILLS[base];
+}
+
 function combatSkillFor(cls, chId) {
-  return (CLASS_SKILLS[cls] || []).find((s) => s.challenge === chId);
+  return classSkillList(cls).find((s) => s.challenge === chId && (!s.ultimate || CLASSES[cls].advanced));
 }
 
 function combatSkills() {
   const discount = badgeBuffs().skillCost;
-  return CLASS_SKILLS[settings.cls].map((s) => ({
+  const promoted = Boolean(CLASSES[settings.cls].advanced);
+  return classSkillList(settings.cls).map((s) => ({
     ...s,
-    rank: skillRank(s.challenge),
+    rank: s.ultimate ? (promoted ? Math.max(1, skillRank(s.challenge)) : 0) : skillRank(s.challenge),
     cost: Math.max(5, s.cost - discount),
   }));
 }
@@ -175,28 +216,16 @@ function heroCombat() {
   const a = heroAttributes();
   const buffs = badgeBuffs();
   const level = levelInfo(totalXp()).level;
-  const cls = settings.cls;
-  const primary = {
-    barbarian: a.STR,
-    assassin: a.AGI,
-    monk: a.WIS,
-    warrior: ((a.STR + a.AGI + a.WIS + a.VIT) / 4) * 1.3,
-    knight: (a.STR + a.VIT) * 0.5,
-  }[cls];
-  // A barbarian's muscle mass counts toward their health
-  const toughness = a.VIT + (cls === "barbarian" ? a.STR * 0.5 : 0);
-  const hpMult = { barbarian: 1.2, knight: 1.2 }[cls] || 1;
-  const defMult = { warrior: 1.15, knight: 1.1 }[cls] || 1;
+  const p = COMBAT_PROFILES[settings.cls];
+  const toughness = p.toughness ? p.toughness(a) : a.VIT;
   return {
-    maxHp: Math.round(
-      (50 + level * 10 + effective(toughness) * 3) * hpMult * (1 + buffs.hp / 100)
-    ),
-    pow: Math.round((4 + level * 1.5 + effective(primary)) * (cls === "warrior" ? 1.15 : 1) * (1 + buffs.pow / 100)),
-    def: Math.round((level + effective(a.VIT) * 0.5) * defMult * (1 + buffs.def / 100)),
-    crit: Math.round(Math.min(5 + effective(a.AGI) * 0.6 + (cls === "assassin" ? 10 : 0), 60) + buffs.crit),
-    dodge: Math.round(Math.min(2 + effective(a.AGI) * 0.3, 30) + buffs.dodge),
-    regen: (cls === "monk" ? 0.03 : 0) + buffs.regen / 100,
-    lifesteal: cls === "barbarian" ? 0.15 : 0,
+    maxHp: Math.round((50 + level * 10 + effective(toughness) * 3) * (p.hp || 1) * (1 + buffs.hp / 100)),
+    pow: Math.round((4 + level * 1.5 + effective(p.primary(a))) * (p.pow || 1) * (1 + buffs.pow / 100)),
+    def: Math.round((level + effective(a.VIT) * 0.5) * (p.def || 1) * (1 + buffs.def / 100)),
+    crit: Math.round(Math.min(5 + effective(a.AGI) * 0.6 + (p.crit || 0), 60) + buffs.crit),
+    dodge: Math.round(Math.min(2 + effective(a.AGI) * 0.3 + (p.dodge || 0), 30) + buffs.dodge),
+    regen: (p.regen || 0) + buffs.regen / 100,
+    lifesteal: p.lifesteal || 0,
     startEnergy: Math.min(MAX_ENERGY, 40 + buffs.energy),
     energyPerTurn: 15 + buffs.energyRegen,
     potions: POTIONS_PER_RUN + buffs.potions,
@@ -350,7 +379,10 @@ function useSkill(skill) {
       parts.push("poisoned");
     }
   }
-  if (fx.heal) parts.push(`healed ${heal(fx.heal * power)} HP`);
+  if (fx.heal) {
+    const healed = heal(fx.heal * power);
+    parts.push(healed ? `healed ${healed} HP` : "already at full HP");
+  }
   if (fx.cleanse && battle.dot) {
     battle.dot = null;
     parts.push("cured");
@@ -363,9 +395,20 @@ function useSkill(skill) {
     if (b.block) b.block = Math.min(b.block + 0.1 * (skill.rank - 1), 0.8);
     if (b.dodge) b.dodge += 10 * (skill.rank - 1);
     battle.buffs.push(b);
-    if (!fx.damage) parts.push(skill.desc[0].toLowerCase() + skill.desc.slice(1));
+    parts.push(buffSummary(b));
   }
   addLog(`${skill.icon} ${skill.name}: ${parts.join(", ")}.`);
+}
+
+function buffSummary(b) {
+  const effects = [];
+  if (b.atk) effects.push(`+${Math.round(b.atk * 100)}% damage`);
+  if (b.def) effects.push(`+${Math.round(b.def * 100)}% armor`);
+  if (b.block) effects.push(`blocking ${Math.round(b.block * 100)}%`);
+  if (b.dodge) effects.push(`+${b.dodge}% dodge`);
+  if (b.regen) effects.push(`healing ${Math.round(b.regen * 100)}% per turn`);
+  if (b.evade) return "ready to dodge the next attack";
+  return `${effects.join(" and ")} for ${b.turns} turn${b.turns > 1 ? "s" : ""}`;
 }
 
 function enemyStrike(mult) {
@@ -620,14 +663,14 @@ function renderBattle() {
     .map((s) => {
       if (s.rank < 1) {
         return `
-          <button type="button" class="action skill locked" disabled title="Learn from ${CHALLENGES[s.challenge].name}">
+          <button type="button" class="action skill locked" disabled>
             <span class="action-name">🔒 ${s.name}</span>
-            <span class="action-sub">${CHALLENGES[s.challenge].name} rank I</span>
+            <span class="action-sub">${s.ultimate ? "Class promotion" : `${CHALLENGES[s.challenge].name} rank I`}</span>
           </button>`;
       }
       const noEnergy = b.energy < s.cost;
       return `
-        <button type="button" class="action skill" data-action="${s.id}" ${disabled || noEnergy ? "disabled" : ""}>
+        <button type="button" class="action skill ${s.ultimate ? "ultimate" : ""}" data-action="${s.id}" ${disabled || noEnergy ? "disabled" : ""}>
           <span class="action-name">${s.icon} ${s.name}</span>
           <span class="action-sub">${s.cost} EN · Rank ${RANKS[s.rank - 1]}</span>
         </button>`;
@@ -686,12 +729,14 @@ function renderFight() {
       const state =
         s.rank > 0
           ? `Rank ${RANKS[s.rank - 1]} · ${Math.round(skillPower(s.rank) * 100)}% power · ${s.cost} EN`
-          : `🔒 Learn it: reach rank I in ${ch.name}`;
+          : s.ultimate
+            ? `🔒 Promote to ${CLASSES[CLASSES[settings.cls].promotion].name} at LV ${PROMOTION_LEVEL} to unlock`
+            : `🔒 Learn it: reach rank I in ${ch.name}`;
       return `
         <li class="skill ${s.rank ? "" : "locked"}">
           <span class="workout-icon" aria-hidden="true">${s.icon}</span>
           <span class="workout-info">
-            <span class="workout-name">${s.name}</span>
+            <span class="workout-name">${s.name}${s.ultimate ? ` <span class="ult-tag pixel">Ultimate</span>` : ""}</span>
             <span class="workout-meta">${s.desc}</span>
             <span class="skill-state">${state}</span>
           </span>

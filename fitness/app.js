@@ -38,7 +38,8 @@ const CLASSES = {
     bonus: { STR: 2 },
     bonusText: "2× XP on Strength training",
     base: { STR: 8, AGI: 4, WIS: 3, VIT: 5 },
-    titles: ["Wildling", "Brute", "Raider", "Berserker", "Chieftain", "Warlord", "Titan", "Godslayer"],
+    titles: ["Wildling", "Brute", "Raider", "Berserker", "Marauder", "Warlord", "Titan", "Godslayer"],
+    promotion: "chieftain",
     quests: [
       { id: "b1", name: "Iron Will", desc: "Train Strength for 30 minutes", stat: "STR", minutes: 30, xp: 60 },
       { id: "b2", name: "Lift the Mountain", desc: "Train Strength for 45 minutes", stat: "STR", minutes: 45, xp: 90 },
@@ -72,7 +73,8 @@ const CLASSES = {
     bonus: { WIS: 2 },
     bonusText: "2× XP on Wisdom training",
     base: { STR: 3, AGI: 4, WIS: 9, VIT: 4 },
-    titles: ["Novice", "Acolyte", "Disciple", "Adept", "Sage", "Master", "Grandmaster", "Enlightened One"],
+    titles: ["Novice", "Acolyte", "Disciple", "Adept", "Sage", "Elder", "Grandmaster", "Enlightened One"],
+    promotion: "master",
     quests: [
       { id: "m1", name: "Inner Peace", desc: "Train Wisdom for 20 minutes", stat: "WIS", minutes: 20, xp: 50 },
       { id: "m2", name: "Flowing Water", desc: "Train Wisdom for 40 minutes", stat: "WIS", minutes: 40, xp: 90 },
@@ -90,6 +92,7 @@ const CLASSES = {
     bonusText: "1.5× XP on all training",
     base: { STR: 6, AGI: 5, WIS: 4, VIT: 5 },
     titles: ["Recruit", "Squire", "Soldier", "Vanguard", "Champion", "Commander", "Hero", "Legend"],
+    promotion: "gladiator",
     quests: [
       { id: "w1", name: "Daily Drill", desc: "Train for 30 minutes", minutes: 30, xp: 50 },
       { id: "w2", name: "Shield Wall", desc: "Train Strength for 20 minutes", stat: "STR", minutes: 20, xp: 50 },
@@ -106,7 +109,8 @@ const CLASSES = {
     bonus: { STR: 1.75, VIT: 1.75 },
     bonusText: "1.75× XP on Strength and Vitality training",
     base: { STR: 7, AGI: 3, WIS: 4, VIT: 8 },
-    titles: ["Page", "Shieldbearer", "Knight-Errant", "Sworn Knight", "Knight Captain", "Paladin", "Lord Protector", "Knight of Legend"],
+    titles: ["Page", "Shieldbearer", "Knight-Errant", "Sworn Knight", "Knight Captain", "Banneret", "Lord Protector", "Knight of Legend"],
+    promotion: "paladin",
     quests: [
       { id: "k1", name: "Long Ride", desc: "Train Vitality for 45 minutes", stat: "VIT", minutes: 45, xp: 80 },
       { id: "k2", name: "Trial of Endurance", desc: "Train for 60 minutes", minutes: 60, xp: 90 },
@@ -115,6 +119,79 @@ const CLASSES = {
     ],
   },
 };
+
+// Promoted classes: a base class can promote once the hero reaches this level.
+// They share their base class's sprite (recolored), quests and base stats.
+const PROMOTION_LEVEL = 10;
+
+Object.assign(CLASSES, {
+  chieftain: {
+    name: "Chieftain",
+    from: "barbarian",
+    color: "#f43f5e",
+    body: "Massive & powerful",
+    tagline: "Leader of the clan. Your bodybuilder frame has become the stuff of legend.",
+    focus: "Heavy lifting, progressive overload, high-protein meals",
+    bonus: { STR: 2.5 },
+    bonusText: "2.5× XP on Strength training",
+    titles: ["Clan Blood", "Clan Champion", "Warband Leader", "Chieftain", "High Chieftain", "Warchief", "Horde King", "Lord of the Wilds"],
+  },
+  master: {
+    name: "Master",
+    from: "monk",
+    color: "#fcd34d",
+    body: "Supple & serene",
+    tagline: "You have mastered mind and body. Your calm cannot be shaken.",
+    focus: "Yoga, stretching, meditation and mindful movement",
+    bonus: { WIS: 2.5 },
+    bonusText: "2.5× XP on Wisdom training",
+    titles: ["Initiate Master", "Master of Fists", "Master of Winds", "Master of Stillness", "True Master", "Grand Master", "Sage of Ages", "Ascended"],
+  },
+  gladiator: {
+    name: "Gladiator",
+    from: "warrior",
+    color: "#ea580c",
+    body: "Battle-hardened",
+    tagline: "Champion of the arena. Strong, fast and fearless in every way.",
+    focus: "A mix of everything: strength, cardio and mobility",
+    bonus: { STR: 1.75, AGI: 1.75, WIS: 1.75, VIT: 1.75 },
+    bonusText: "1.75× XP on all training",
+    titles: ["Arena Fodder", "Pit Fighter", "Bloodsport Brawler", "Crowd Favorite", "Arena Champion", "Grand Champion", "Colossus", "Undying Legend"],
+  },
+  paladin: {
+    name: "Paladin",
+    from: "knight",
+    color: "#f1f5f9",
+    body: "Iron-willed & tireless",
+    tagline: "A holy knight whose strength and endurance never fail.",
+    focus: "Long steady sessions, rucking and hiking, circuits and functional strength",
+    bonus: { STR: 2, VIT: 2 },
+    bonusText: "2× XP on Strength and Vitality training",
+    titles: ["Oathsworn", "Templar", "Crusader", "Holy Knight", "Lightbringer", "Grand Paladin", "Saint", "Divine Champion"],
+  },
+});
+for (const c of Object.values(CLASSES)) {
+  if (!c.from) continue;
+  c.advanced = true;
+  c.base = CLASSES[c.from].base;
+  c.quests = CLASSES[c.from].quests;
+}
+
+// A promoted class's original class (or the class itself)
+function baseClass(cls) {
+  return CLASSES[cls].from || cls;
+}
+
+function canPromote() {
+  const promo = CLASSES[settings.cls].promotion;
+  return Boolean(promo) && levelInfo(totalXp()).level >= PROMOTION_LEVEL;
+}
+
+// Whether a class boosts every attribute equally (then no stat is highlighted)
+function evenBonus(cls) {
+  const b = CLASSES[cls].bonus;
+  return Object.keys(STATS).every((stat) => b[stat] === b.STR);
+}
 
 // 16x16 pixel-art sprites. Each letter maps to a color in SPRITE_COLORS.
 const SPRITES = {
@@ -238,13 +315,21 @@ function pixels(rows, colors, dx = 0, dy = 0) {
   return rects;
 }
 
+// Per-class recolors of the base sprites (promoted classes get finer armor)
+const SPRITE_RECOLORS = {
+  warrior: { b: "#3b82f6" }, // blue tunic rather than brown leather
+  chieftain: { m: "#facc15", w: "#fef3c7", f: "#f5f5f4", b: "#991b1b" }, // gold helm, white wolf pelt
+  master: { o: "#f8fafc", O: "#cbd5e1", r: "#facc15", y: "#fde047" }, // white robe, gold sash
+  gladiator: { m: "#d97706", M: "#92400e", b: "#dc2626", B: "#7f1d1d" }, // bronze helm, red tunic
+  paladin: { a: "#fefce8", m: "#facc15", t: "#f8fafc", T: "#f8fafc", p: "#fde047" }, // gold and white plate
+};
+
 function spriteColors(cls) {
-  // The warrior's tunic is class blue rather than brown leather
-  return cls === "warrior" ? { ...SPRITE_COLORS, b: "#3b82f6" } : SPRITE_COLORS;
+  return { ...SPRITE_COLORS, ...(SPRITE_RECOLORS[cls] || {}) };
 }
 
 function spriteSvg(cls, label) {
-  const rects = pixels(SPRITES[cls], spriteColors(cls));
+  const rects = pixels(SPRITES[baseClass(cls)], spriteColors(cls));
   return `<svg class="sprite" viewBox="0 0 16 16" role="img" aria-label="${label}">${rects}</svg>`;
 }
 
@@ -327,7 +412,7 @@ const gearById = (id) => GEAR.find((g) => g.id === id);
 function heroSvg(cls, gear = {}, label = "Your hero") {
   const OX = 2;
   const OY = 2;
-  const anchor = ANCHORS[cls];
+  const anchor = ANCHORS[baseClass(cls)];
   let rects = "";
 
   const aura = gearById(gear.aura);
@@ -353,7 +438,7 @@ function heroSvg(cls, gear = {}, label = "Your hero") {
     }
   }
 
-  rects += pixels(SPRITES[cls], spriteColors(cls), OX, OY);
+  rects += pixels(SPRITES[baseClass(cls)], spriteColors(cls), OX, OY);
 
   const head = gearById(gear.head);
   if (head) rects += pixels(head.art, head.colors, 7, anchor.headTop + OY - 2);
@@ -970,6 +1055,8 @@ function renderHero() {
   $("xp-text").textContent = `${info.into} / ${info.need} XP`;
   $("xp-fill").style.width = `${(info.into / info.need) * 100}%`;
 
+  renderPromotion(info.level);
+
   // Daily quest
   const award = questAwards.find((a) => a.date === todayKey);
   const quest = award ? findQuest(award.id) : questFor(todayKey, settings.cls);
@@ -1009,10 +1096,10 @@ function renderHero() {
         .join("")
     : `<li class="empty-state">Complete challenges in <strong>Train</strong> to learn skills.</li>`;
   const maxValue = Math.max(20, ...Object.values(values));
-  const isWarrior = settings.cls === "warrior";
+  const even = evenBonus(settings.cls);
   $("attributes").innerHTML = Object.entries(STATS)
     .map(([stat, s]) => {
-      const bonus = !isWarrior && cls.bonus[stat] > 1;
+      const bonus = !even && cls.bonus[stat] > 1;
       return `
         <div class="attr pixel" title="${s.label}">
           <span class="attr-name ${bonus ? "bonus" : ""}" ${bonus ? 'aria-label="' + stat + ', class bonus"' : ""}>${stat}</span>
@@ -1055,6 +1142,56 @@ function renderHero() {
     ? todays.map(workoutItem).join("")
     : `<li class="empty-state">No battles yet today. Tap <strong>Train</strong> to earn XP!</li>`;
 }
+
+// Shows the upcoming (or ready) class promotion for base classes
+function renderPromotion(level) {
+  const card = $("promotion-card");
+  const promoId = CLASSES[settings.cls].promotion;
+  card.hidden = !promoId;
+  if (!promoId) return;
+  const promo = CLASSES[promoId];
+  const ready = level >= PROMOTION_LEVEL;
+  const ultimate = ULTIMATE_SKILLS[promoId];
+  card.classList.toggle("ready", ready);
+  card.innerHTML = `
+    <div class="quest-header pixel"><span>⚜ Class Promotion</span><span>${ready ? "Ready!" : `LV ${level} / ${PROMOTION_LEVEL}`}</span></div>
+    <div class="promo-sprites">
+      <div class="portrait">${heroSvg(settings.cls, settings.gear, CLASSES[settings.cls].name)}</div>
+      <span class="promo-arrow pixel" aria-hidden="true">➜</span>
+      <div class="portrait promo-target" style="--c:${promo.color}">${heroSvg(promoId, settings.gear, promo.name)}</div>
+    </div>
+    <div class="quest-name pixel" style="color:${promo.color}">${promo.name}</div>
+    <p class="quest-desc">${promo.tagline}</p>
+    <ul class="promo-perks">
+      <li>📈 ${promo.bonusText}</li>
+      <li>🛡️ ${CLASS_PASSIVES[promoId]}</li>
+      <li>${ultimate.icon} Ultimate skill: <strong>${ultimate.name}</strong>. ${ultimate.desc}</li>
+      <li>✨ New titles and upgraded armor</li>
+    </ul>
+    <button type="button" class="btn pixel" id="promote-btn" ${ready ? "" : "disabled"}>
+      ${ready ? `Promote to ${promo.name}` : `Reach LV ${PROMOTION_LEVEL} to promote`}
+    </button>`;
+}
+
+function promote() {
+  if (!canPromote()) return;
+  const from = CLASSES[settings.cls];
+  settings.cls = from.promotion;
+  save(SETTINGS_KEY, settings);
+  const promo = CLASSES[settings.cls];
+  renderActivities();
+  render();
+  window.scrollTo(0, 0);
+  popup(
+    heroSvg(settings.cls, settings.gear, promo.name),
+    `You are now a ${promo.name}!`,
+    `Your ${from.name} has been promoted. ${promo.bonusText}, a stronger passive, and the ultimate skill ${ULTIMATE_SKILLS[settings.cls].name}.`
+  );
+}
+
+document.getElementById("promotion-card").addEventListener("click", (event) => {
+  if (event.target.closest("#promote-btn")) promote();
+});
 
 function renderJournal() {
   $("all-time").innerHTML = `
@@ -1104,11 +1241,11 @@ function renderActivities() {
   const entries = Object.entries(ACTIVITIES);
   // Show the class's bonus activities first
   entries.sort((a, b) => multiplier(settings.cls, b[1].stat) - multiplier(settings.cls, a[1].stat));
-  const isWarrior = settings.cls === "warrior";
+  const even = evenBonus(settings.cls);
   $("activity-grid").innerHTML = entries
     .map(([value, a]) => {
       const m = multiplier(settings.cls, a.stat);
-      const badge = m > 1 && !isWarrior ? `<span class="badge">${m}× XP</span>` : "";
+      const badge = m > 1 && !even ? `<span class="badge">${m}× XP</span>` : "";
       return `
         <button type="button" class="activity ${value === selected ? "selected" : ""}" data-value="${value}"
           role="radio" aria-checked="${value === selected}">
@@ -1241,6 +1378,7 @@ let pickedClass = null;
 
 function renderClassPicker() {
   $("class-grid").innerHTML = Object.entries(CLASSES)
+    .filter(([, c]) => !c.advanced)
     .map(
       ([key, c]) => `
       <button type="button" class="class-card ${key === pickedClass ? "selected" : ""}" data-class="${key}"
@@ -1267,7 +1405,7 @@ function renderClassPicker() {
 }
 
 function openClassPicker(isChange) {
-  pickedClass = settings.cls;
+  pickedClass = settings.cls && baseClass(settings.cls);
   $("hero-name").value = settings.heroName;
   $("class-select-title").textContent = isChange ? "Change Class" : "Choose Your Class";
   $("begin-btn").textContent = isChange ? "Confirm" : "Begin Adventure";
@@ -1287,8 +1425,10 @@ $("class-grid").addEventListener("click", (event) => {
 $("begin-btn").addEventListener("click", () => {
   if (!pickedClass) return;
   const isNew = !settings.cls;
-  const changed = settings.cls && settings.cls !== pickedClass;
-  settings.cls = pickedClass;
+  const before = settings.cls;
+  // Re-picking your own base class keeps a promotion
+  if (!before || baseClass(before) !== pickedClass) settings.cls = pickedClass;
+  const changed = before && before !== settings.cls;
   settings.heroName = $("hero-name").value.trim().slice(0, 20);
   save(SETTINGS_KEY, settings);
   $("class-select").hidden = true;
@@ -1409,6 +1549,10 @@ function celebrate(levelBefore, unlocks) {
       `Level Up! LV ${levelAfter}`,
       titleChanged ? `New title unlocked: ${newTitle}!` : "Your power grows. Keep training!"
     );
+    const promoId = CLASSES[settings.cls].promotion;
+    if (promoId && levelBefore < PROMOTION_LEVEL && levelAfter >= PROMOTION_LEVEL) {
+      popup("⚜️", "Promotion Available!", `Your ${CLASSES[settings.cls].name} can now become a ${CLASSES[promoId].name}. Promote on the Hero screen.`);
+    }
   }
   for (const b of unlocks.badges) {
     popup(b.icon, "Badge Earned!", `${b.name}: ${b.desc}. Permanent buff: ${buffText(BADGE_BUFFS[b.id])}!`);
