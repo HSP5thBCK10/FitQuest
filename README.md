@@ -162,6 +162,13 @@ pattern when a monster or your hero faints. You can turn this off in **Camp** ("
 hits in battle"). Web vibration works in Android browsers. iPhone Safari doesn't support
 it, so iPhones stay silent.
 
+**Music:** FitQuest has its own chiptune soundtrack, synthesized live in the browser (no audio
+files, so it works offline). There's a cheerful town theme while you train, a driving battle
+theme in dungeons, a darker theme when the boss appears, plus victory and defeat jingles.
+Music starts on your first tap, because browsers block sound before that. It pauses when the
+app goes to the background and can be turned off in **Camp**. On iPhone, the ring/silent
+switch mutes it.
+
 - **Your battle stats come from real training.** HP, power, armor, crit and dodge are
   based on your level and attributes, so you can't grind your way through: you get
   stronger by working out.
@@ -239,10 +246,11 @@ The app must be served over HTTPS to install. The easiest free option is GitHub 
 | `app.css`          | Pixel/retro game styling                    |
 | `app.js`           | Classes, XP, quests, challenges, skills, badges, gear |
 | `battle.js`        | Dungeons, monsters, class combat skills, turn-based battles |
+| `music.js`         | Chiptune soundtrack synthesized with the Web Audio API |
 | `art.js`           | Pixel art: hero front and back views, gear, pets and monsters |
 | `sw.js`            | Service worker for offline use              |
 | `manifest.json`    | Makes the app installable                   |
 | `icons/`, `fonts/` | App icons and the Press Start 2P pixel font (OFL) |
 
-When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v17`) so installed
+When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v18`) so installed
 copies pick up the update.

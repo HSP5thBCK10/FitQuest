@@ -1998,6 +1998,13 @@ settingsForm.vibration.addEventListener("change", () => {
   if (settings.vibration && navigator.vibrate) navigator.vibrate(30);
 });
 
+settingsForm.music.checked = settings.music !== false;
+settingsForm.music.addEventListener("change", () => {
+  settings.music = settingsForm.music.checked;
+  save(SETTINGS_KEY, settings);
+  Music.setEnabled(settings.music);
+});
+
 function showWeightSetting() {
   $("weight-label").textContent = `Body weight (${settings.units})`;
   settingsForm.weight.value = toDisplayWeight(settings.weight);
@@ -2089,6 +2096,9 @@ if (settings.cls) {
   applyTheme();
   openClassPicker(false);
 }
+
+// Town music starts with the first tap (browsers block audio before that)
+Music.play("town");
 
 // Re-render if the app is left open past midnight
 document.addEventListener("visibilitychange", () => {

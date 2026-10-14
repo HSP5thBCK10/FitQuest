@@ -443,6 +443,7 @@ function startDungeon(index) {
 function enterEnemy() {
   const e = battle.enemy;
   battle.events.push({ type: "enter" });
+  Music.play(e.boss ? "boss" : "battle");
   addLog(e.boss ? `The boss ${e.name} appeared!` : `A wild ${e.name} appeared!`);
   if (e.ability) addLog(ABILITY_WARNINGS[e.ability]);
 }
@@ -764,6 +765,7 @@ function victory() {
   battle.goldFound = (battle.goldFound || 0) + bonus;
   saveDungeons();
   battle.over = true;
+  Music.play("victory");
 
   const level = levelInfo(totalXp()).level;
   const unlocks = syncUnlocks();
@@ -797,6 +799,7 @@ async function defeat() {
   addLog(`${heroName()} fainted...`);
   if (!(await present())) return;
   battle.over = true;
+  Music.play("defeat");
   render();
   showBattleEnd(
     "Defeated",
@@ -809,6 +812,7 @@ function fleeBattle() {
   if (battle && battle.onTap) battle.onTap();
   battle = null;
   $("battle").hidden = true;
+  Music.play("town");
   renderFight();
 }
 
