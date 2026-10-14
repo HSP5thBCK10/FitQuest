@@ -9,21 +9,21 @@
 //   evasive: 20% chance to dodge each of your hits
 //   poison / burn: 35% chance per hit to deal damage over 3 turns
 const MONSTERS = {
-  rat: { name: "Giant Rat", icon: "🐀" },
-  goblin: { name: "Goblin", icon: "👺", ability: "enrage" },
-  goblin_king: { name: "Goblin King", icon: "👹", ability: "enrage", boss: true },
-  bat: { name: "Vampire Bat", icon: "🦇", ability: "drain" },
-  skeleton: { name: "Skeleton", icon: "💀", ability: "armored" },
-  lich: { name: "Lich", icon: "🧟", ability: "drain", boss: true },
-  wolf: { name: "Dire Wolf", icon: "🐺", ability: "evasive" },
-  spider: { name: "Giant Spider", icon: "🕷️", ability: "poison" },
-  treant: { name: "Elder Treant", icon: "🌳", ability: "armored", boss: true },
-  imp: { name: "Fire Imp", icon: "😈", ability: "evasive" },
-  golem: { name: "Lava Golem", icon: "🗿", ability: "armored" },
-  drake: { name: "Fire Drake", icon: "🐲", ability: "burn", boss: true },
-  wyvern: { name: "Wyvern", icon: "🦅", ability: "evasive" },
-  ogre: { name: "Ogre", icon: "🧌", ability: "enrage" },
-  dragon: { name: "Ancient Dragon", icon: "🐉", ability: "burn", boss: true },
+  rat: { name: "Giant Rat" },
+  goblin: { name: "Goblin", ability: "enrage" },
+  goblin_king: { name: "Goblin King", ability: "enrage", boss: true },
+  bat: { name: "Vampire Bat", ability: "drain" },
+  skeleton: { name: "Skeleton", ability: "armored" },
+  lich: { name: "Lich", ability: "drain", boss: true },
+  wolf: { name: "Dire Wolf", ability: "evasive" },
+  spider: { name: "Giant Spider", ability: "poison" },
+  treant: { name: "Elder Treant", ability: "armored", boss: true },
+  imp: { name: "Fire Imp", ability: "evasive" },
+  golem: { name: "Lava Golem", ability: "armored" },
+  drake: { name: "Fire Drake", ability: "burn", boss: true },
+  wyvern: { name: "Wyvern", ability: "evasive" },
+  ogre: { name: "Ogre", ability: "enrage" },
+  dragon: { name: "Ancient Dragon", ability: "burn", boss: true },
 };
 
 // Each dungeon has 3 floors; the boss on the last floor is one level higher
@@ -330,7 +330,7 @@ function startDungeon(index) {
     shown: { hp: stats.maxHp, enemyHp: 0 },
   };
   battle.enemy = monsterOnFloor(dungeon, 0);
-  $("b-hero-sprite").innerHTML = heroSvg(settings.cls, settings.gear, "Your hero");
+  $("b-hero-sprite").innerHTML = heroBackArt(settings.cls, settings.gear);
   $("b-scene").className = `scene ${dungeon.id}`;
   $("b-enemy-sprite").dataset.monster = "";
   $("battle").hidden = false;
@@ -772,7 +772,7 @@ function renderBattle() {
   const enemySprite = $("b-enemy-sprite");
   if (enemySprite.dataset.monster !== e.id) {
     enemySprite.dataset.monster = e.id;
-    enemySprite.innerHTML = `<span class="monster-icon ${e.boss ? "boss" : ""}">${e.icon}</span>`;
+    enemySprite.innerHTML = `<div class="monster ${e.boss ? "boss" : ""}">${monsterArt(e.id, e.name)}</div>`;
   }
   $("b-enemy-name").textContent = `${e.boss ? "👑" : ""}${e.name}`;
   $("b-enemy-level").textContent = `Lv${e.level}`;
@@ -927,7 +927,8 @@ function renderFight() {
         <div class="dungeon-icon" aria-hidden="true">${open ? d.icon : "🔒"}</div>
         <div class="dungeon-info">
           <div class="dungeon-name pixel">${d.name}</div>
-          <div class="workout-meta">Recommended LV ${d.level} · ${d.floors.map((f) => MONSTERS[f].icon).join(" ")}</div>
+          <div class="mini-monsters">${d.floors.map((f) => monsterArt(f, MONSTERS[f].name)).join("")}</div>
+          <div class="workout-meta">Recommended LV ${d.level}</div>
           <div class="workout-meta">${cleared ? `✔ Cleared · Loot: ${loot.name}` : open ? `Boss loot: ${loot.name}` : `Clear ${DUNGEONS[i - 1].name} first`}</div>
         </div>
         <button type="button" class="btn pixel enter-btn" data-dungeon="${i}" ${open ? "" : "disabled"}>${cleared ? "Again" : "Enter"}</button>

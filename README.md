@@ -108,8 +108,9 @@ time of the lift, so ranks are fair for every size. Weights can be entered in kg
 
 Take your hero into **5 dungeons** (Goblin Cave → Haunted Crypt → Spider Forest → Volcano
 Depths → Dragon's Peak), each with 3 floors: two monsters and a boss. Battles are
-turn-based and play out like a classic Pokémon battle: your hero and the monster face off
-on the battlefield with HP boxes, messages type out one at a time ("A wild Goblin
+turn-based and play out like a classic Pokémon battle: your hero (seen from behind, in
+their class armor and equipped gear) and the monster (each with its own pixel-art sprite)
+face off on the battlefield with HP boxes, messages type out one at a time ("A wild Goblin
 appeared!", "A critical hit!"), and you choose **FIGHT** (Strike or one of your class
 moves, which cost energy), **BAG** (Potions, 2 per run), **GUARD** or **RUN**. Tap the
 message box to speed through text.
@@ -184,9 +185,10 @@ The app must be served over HTTPS to install. The easiest free option is GitHub 
 | `app.css`          | Pixel/retro game styling                    |
 | `app.js`           | Classes, XP, quests, challenges, skills, badges, gear, sprites |
 | `battle.js`        | Dungeons, monsters, class combat skills, turn-based battles |
+| `battle-art.js`    | Pixel-art battle sprites: monsters and hero back views |
 | `sw.js`            | Service worker for offline use              |
 | `manifest.json`    | Makes the app installable                   |
 | `icons/`, `fonts/` | App icons and the Press Start 2P pixel font (OFL) |
 
-When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v11`) so installed
+When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v12`) so installed
 copies pick up the update.
