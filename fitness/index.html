@@ -17,7 +17,7 @@
 <body>
   <header class="app-header">
     <h1 id="screen-title" class="pixel">Hero</h1>
-    <span class="header-level pixel" id="header-level"></span>
+    <span class="header-stats pixel"><span id="header-gold"></span><span class="header-level" id="header-level"></span></span>
   </header>
 
   <main>
@@ -41,6 +41,14 @@
         <div class="quest-desc" id="quest-desc"></div>
         <div class="bar quest-bar"><div class="bar-fill" id="quest-fill"></div></div>
         <div class="quest-progress" id="quest-progress"></div>
+      </div>
+
+      <div class="panel quest-card bounty-card" id="bounty-card">
+        <div class="quest-header pixel"><span>&#128239; Weekly Bounty</span><span class="quest-reward" id="bounty-reward"></span></div>
+        <div class="quest-name pixel" id="bounty-name"></div>
+        <div class="quest-desc" id="bounty-desc"></div>
+        <div class="bar quest-bar"><div class="bar-fill" id="bounty-fill"></div></div>
+        <div class="quest-progress" id="bounty-progress"></div>
       </div>
 
       <div class="stats">
@@ -175,6 +183,12 @@
         <div class="combat-stats" id="combat-stats"></div>
         <p class="hint passive" id="class-passive"></p>
         <p class="hint">Your power comes from real training. Workouts raise your attributes, and challenges teach combat skills.</p>
+      </div>
+
+      <div class="panel">
+        <h2 class="pixel section-head"><span>Shop</span><span id="shop-gold"></span></h2>
+        <p class="hint">Earn gold from workouts, quests, bounties and monsters. Items go in your BAG for any battle.</p>
+        <div class="shop-list" id="shop-list"></div>
       </div>
 
       <div class="panel">

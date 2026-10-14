@@ -80,6 +80,26 @@ h2 {
   color: var(--accent);
 }
 
+.header-stats {
+  display: flex;
+  gap: 12px;
+  font-size: 0.6rem;
+  color: var(--gold);
+}
+
+.bounty-card {
+  box-shadow: inset 0 0 0 2px #f97316, 4px 4px 0 #000;
+}
+
+.bounty-card .quest-header {
+  color: #fb923c;
+}
+
+.bounty-card.done .quest-name::after {
+  content: " \2714";
+  color: var(--success);
+}
+
 .header-level {
   font-size: 0.6rem;
   color: var(--gold);
@@ -882,6 +902,40 @@ textarea:focus {
   margin-bottom: 2px;
 }
 
+.shop-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.shop-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shop-item .workout-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.owned {
+  font-family: var(--pixel-font);
+  font-size: 0.5rem;
+  color: var(--gold);
+}
+
+.buy-btn {
+  margin: 0;
+  padding: 10px 8px;
+  font-size: 0.5rem;
+  flex-shrink: 0;
+  min-width: 64px;
+}
+
+.status-tag.crs { background: #4c1d95; }
+
 .mini-monsters {
   display: flex;
   gap: 2px;
@@ -956,6 +1010,11 @@ textarea:focus {
 .scene.forest { --sky1: #9fd8a0; --sky2: #cdeec0; --ground1: #6cbf5a; --ground2: #3f8f3a; --pad: #a7d97a; }
 .scene.volcano { --sky1: #2a0a0a; --sky2: #6b1d0f; --ground1: #7c3418; --ground2: #4a1a0c; --pad: #b45309; }
 .scene.peak { --sky1: #8ec5ff; --sky2: #d6ecff; --ground1: #eef4fb; --ground2: #c5d5e8; --pad: #ffffff; }
+.scene.tundra { --sky1: #c7e4f7; --sky2: #e9f5fc; --ground1: #f8fbfd; --ground2: #cfe3f0; --pad: #e0f2fe; }
+.scene.temple { --sky1: #0b3b4a; --sky2: #135e6e; --ground1: #1f7a7a; --ground2: #0f4c4c; --pad: #5eead4; }
+.scene.ruins { --sky1: #f6c177; --sky2: #fde3b0; --ground1: #e2b26b; --ground2: #b8863f; --pad: #f3d39a; }
+.scene.shadow { --sky1: #07040f; --sky2: #1a0f2e; --ground1: #24163d; --ground2: #120a20; --pad: #4c1d95; }
+.scene.abyss { --sky1: #1a0505; --sky2: #3b0a0a; --ground1: #4c0d0d; --ground2: #250505; --pad: #9a3412; }
 
 .platform {
   position: absolute;

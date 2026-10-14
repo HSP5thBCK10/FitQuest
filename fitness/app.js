@@ -22,6 +22,14 @@ const ACTIVITIES = {
   walking: { label: "Walking", icon: "🚶", stat: "VIT", met: 3.5 },
   hiking: { label: "Hiking", icon: "🥾", stat: "VIT", met: 6.0 },
   swimming: { label: "Swimming", icon: "🏊", stat: "VIT", met: 8.0 },
+  climbing: { label: "Climbing", icon: "🧗", stat: "STR", met: 8.0 },
+  rowing: { label: "Rowing", icon: "🚣", stat: "AGI", met: 7.0 },
+  boxing: { label: "Boxing", icon: "🥊", stat: "AGI", met: 7.8 },
+  jumprope: { label: "Jump Rope", icon: "🪢", stat: "AGI", met: 11.0 },
+  dance: { label: "Dance", icon: "💃", stat: "AGI", met: 5.5 },
+  martialarts: { label: "Martial Arts", icon: "🥋", stat: "WIS", met: 7.0 },
+  pilates: { label: "Pilates", icon: "🤸‍♀️", stat: "WIS", met: 3.0 },
+  rucking: { label: "Rucking", icon: "🎒", stat: "VIT", met: 6.5 },
   other: { label: "Other", icon: "⭐", stat: "VIT", met: 4.0 },
 };
 
@@ -45,6 +53,10 @@ const CLASSES = {
       { id: "b2", name: "Lift the Mountain", desc: "Train Strength for 45 minutes", stat: "STR", minutes: 45, xp: 90 },
       { id: "b3", name: "War Cry", desc: "Complete 2 training sessions", sessions: 2, xp: 60 },
       { id: "b4", name: "Bulk Up", desc: "Lift weights for 20 minutes", type: "strength", minutes: 20, xp: 50 },
+      { id: "b5", name: "Berserker's Hour", desc: "Train for 60 minutes", minutes: 60, xp: 90 },
+      { id: "b6", name: "Climb the Cliffs", desc: "Climb or do calisthenics for 25 minutes", type: "calisthenics", minutes: 25, xp: 55 },
+      { id: "b7", name: "Raid Party", desc: "Complete 3 training sessions", sessions: 3, xp: 90 },
+      { id: "b8", name: "Warpaint", desc: "Train Strength for 60 minutes", stat: "STR", minutes: 60, xp: 110 },
     ],
   },
   assassin: {
@@ -63,6 +75,10 @@ const CLASSES = {
       { id: "a2", name: "Into the Night", desc: "Train Agility for 45 minutes", stat: "AGI", minutes: 45, xp: 90 },
       { id: "a3", name: "Silent Steps", desc: "Cover 5 km in any training", km: 5, xp: 70 },
       { id: "a4", name: "Quick Strike", desc: "Do 20 minutes of HIIT", type: "hiit", minutes: 20, xp: 50 },
+      { id: "a5", name: "Rooftop Run", desc: "Run for 30 minutes", type: "running", minutes: 30, xp: 60 },
+      { id: "a6", name: "Shadow Boxing", desc: "Box for 20 minutes", type: "boxing", minutes: 20, xp: 50 },
+      { id: "a7", name: "Long Shadow", desc: "Cover 10 km in any training", km: 10, xp: 100 },
+      { id: "a8", name: "Double Agent", desc: "Complete 2 training sessions", sessions: 2, xp: 60 },
     ],
   },
   monk: {
@@ -81,6 +97,10 @@ const CLASSES = {
       { id: "m2", name: "Flowing Water", desc: "Train Wisdom for 40 minutes", stat: "WIS", minutes: 40, xp: 90 },
       { id: "m3", name: "Still Mind", desc: "Meditate for 10 minutes", type: "meditation", minutes: 10, xp: 40 },
       { id: "m4", name: "Balanced Path", desc: "Complete 2 training sessions", sessions: 2, xp: 60 },
+      { id: "m5", name: "Way of the Fist", desc: "Practice martial arts for 30 minutes", type: "martialarts", minutes: 30, xp: 60 },
+      { id: "m6", name: "Lotus Flow", desc: "Do yoga for 30 minutes", type: "yoga", minutes: 30, xp: 60 },
+      { id: "m7", name: "Pilgrim's Walk", desc: "Train Vitality for 30 minutes", stat: "VIT", minutes: 30, xp: 50 },
+      { id: "m8", name: "Deep Stillness", desc: "Meditate for 20 minutes", type: "meditation", minutes: 20, xp: 60 },
     ],
   },
   warrior: {
@@ -99,6 +119,10 @@ const CLASSES = {
       { id: "w2", name: "Shield Wall", desc: "Train Strength for 20 minutes", stat: "STR", minutes: 20, xp: 50 },
       { id: "w3", name: "Forced March", desc: "Train Vitality for 30 minutes", stat: "VIT", minutes: 30, xp: 50 },
       { id: "w4", name: "Battle Ready", desc: "Complete 2 training sessions", sessions: 2, xp: 60 },
+      { id: "w5", name: "Swift Strikes", desc: "Train Agility for 30 minutes", stat: "AGI", minutes: 30, xp: 50 },
+      { id: "w6", name: "Campaign", desc: "Train for 60 minutes", minutes: 60, xp: 90 },
+      { id: "w7", name: "Meditate on Victory", desc: "Train Wisdom for 20 minutes", stat: "WIS", minutes: 20, xp: 45 },
+      { id: "w8", name: "Three Fronts", desc: "Complete 3 training sessions", sessions: 3, xp: 90 },
     ],
   },
   knight: {
@@ -117,6 +141,10 @@ const CLASSES = {
       { id: "k2", name: "Trial of Endurance", desc: "Train for 60 minutes", minutes: 60, xp: 90 },
       { id: "k3", name: "Squire's Drill", desc: "Train Strength for 30 minutes", stat: "STR", minutes: 30, xp: 60 },
       { id: "k4", name: "Pilgrimage", desc: "Cover 8 km in any training", km: 8, xp: 80 },
+      { id: "k5", name: "Armored March", desc: "Go rucking for 30 minutes", type: "rucking", minutes: 30, xp: 60 },
+      { id: "k6", name: "Siege Training", desc: "Train Strength for 45 minutes", stat: "STR", minutes: 45, xp: 80 },
+      { id: "k7", name: "Crusade", desc: "Cover 12 km in any training", km: 12, xp: 110 },
+      { id: "k8", name: "Vigil of Iron", desc: "Train for 90 minutes", minutes: 90, xp: 130 },
     ],
   },
 };
@@ -291,6 +319,25 @@ const GEAR = [
     tones: ["#450a0a", "#b91c1c", "#fbbf24"] },
   { id: "dragon_helm", slot: "head", name: "Dragonslayer Helm", unlock: { dungeon: "peak" }, xp: 5,
     colors: { r: "#b91c1c", y: "#facc15" } },
+  { id: "frost_crown", slot: "head", name: "Frost Crown", unlock: { dungeon: "tundra" },
+    colors: { m: "#bae6fd", r: "#0ea5e9" } },
+  { id: "tidal_cape", slot: "back", name: "Tidal Cape", unlock: { dungeon: "temple" },
+    colors: { c: "#0e7490", h: "#67e8f9" } },
+  { id: "scarab", slot: "pet", name: "Golden Scarab", unlock: { dungeon: "ruins" } },
+  { id: "shadow_aura", slot: "aura", name: "Shadow Aura", unlock: { dungeon: "shadow" },
+    tones: ["#1e1b4b", "#4c1d95", "#8b5cf6"] },
+  { id: "demon_horns", slot: "head", name: "Demon Horns", unlock: { dungeon: "abyss" }, xp: 5,
+    colors: { r: "#450a0a", y: "#f97316" } },
+
+  // High-level rewards
+  { id: "starlight_aura", slot: "aura", name: "Starlight Aura", unlock: { level: 25 },
+    tones: ["#1e3a8a", "#6366f1", "#e0e7ff"] },
+  { id: "champion_cape", slot: "back", name: "Champion's Cape", unlock: { level: 30 }, xp: 5,
+    colors: { c: "#facc15", h: "#b45309" } },
+  { id: "wolf_pup", slot: "pet", name: "Wolf Pup", unlock: { badge: "slayer" } },
+  { id: "celestial_crown", slot: "head", name: "Celestial Crown", unlock: { badge: "realm" }, xp: 5,
+    colors: { y: "#fef9c3", r: "#a855f7" } },
+  { id: "phoenix_chick", slot: "pet", name: "Phoenix Chick", unlock: { badge: "lvl30" }, xp: 5 },
 ];
 
 const SLOTS = {
@@ -335,6 +382,15 @@ const BADGES = [
   { id: "delver", icon: "🗝️", name: "Dungeon Delver", desc: "Clear your first dungeon", check: (c) => [c.clears, 1] },
   { id: "hunter", icon: "☠️", name: "Monster Hunter", desc: "Defeat 50 monsters", check: (c) => [c.kills, 50] },
   { id: "dragonslayer", icon: "🐉", name: "Dragonslayer", desc: "Conquer Dragon's Peak", check: (c) => [c.dragon, 1] },
+  { id: "realm", icon: "🌌", name: "Realm Walker", desc: "Clear all 10 dungeons", check: (c) => [c.clears, 10] },
+  { id: "slayer", icon: "🗡️", name: "Slayer", desc: "Defeat 200 monsters", check: (c) => [c.kills, 200] },
+  { id: "rich", icon: "💰", name: "Treasure Hunter", desc: "Earn 1,000 gold", check: (c) => [c.gold, 1000] },
+  { id: "shopper", icon: "🛒", name: "Good Customer", desc: "Buy 5 items in the shop", check: (c) => [c.purchases, 5] },
+  { id: "bounty1", icon: "📯", name: "Bounty Hunter", desc: "Complete a weekly bounty", check: (c) => [c.bounties, 1] },
+  { id: "bounty10", icon: "🏹", name: "Legendary Hunter", desc: "Complete 10 weekly bounties", check: (c) => [c.bounties, 10] },
+  { id: "trained250", icon: "🗿", name: "Iron Devotion", desc: "Complete 250 workouts", check: (c) => [c.count, 250] },
+  { id: "allchallenges", icon: "🎖", name: "Completionist", desc: "Record every challenge", check: (c) => [c.challengesDone, Object.keys(CHALLENGES).length] },
+  { id: "lvl30", icon: "☄️", name: "Mythic", desc: "Reach level 30", check: (c) => [c.level, 30] },
 ];
 
 const badgeById = (id) => BADGES.find((b) => b.id === id);
@@ -372,6 +428,15 @@ const BADGE_BUFFS = {
   delver: { bossDmg: 10 },
   hunter: { pow: 5 },
   dragonslayer: { xp: 10 },
+  realm: { pow: 10 },
+  slayer: { crit: 5 },
+  rich: { potions: 1 },
+  shopper: { potionHeal: 10 },
+  bounty1: { questXp: 25 },
+  bounty10: { xp: 10 },
+  trained250: { def: 10 },
+  allchallenges: { allStats: 3 },
+  lvl30: { hp: 15, pow: 10 },
 };
 
 const BUFF_LABELS = {
@@ -437,6 +502,16 @@ const CHALLENGES = {
     skills: ["Pathfinder", "Swift Courier", "Phantom Stride"] },
   plank: { name: "Plank Hold", icon: "🧱", kind: "hold", stat: "VIT", tiers: [60, 120, 240],
     skills: ["Stone Skin", "Iron Core", "Unbreakable"] },
+  situps: { name: "Sit-ups", icon: "🔁", kind: "reps", stat: "VIT", tiers: [25, 50, 80],
+    skills: ["Iron Gut", "Core of Steel", "Granite Core"] },
+  burpees: { name: "Burpees", icon: "⚡", kind: "reps", stat: "AGI", tiers: [15, 30, 50],
+    skills: ["Spring Step", "Relentless", "Unstoppable Force"] },
+  deadhang: { name: "Dead Hang", icon: "🪝", kind: "hold", stat: "STR", tiers: [30, 60, 120],
+    skills: ["Firm Grip", "Iron Claws", "Dragon Grip"] },
+  wallsit: { name: "Wall Sit", icon: "🪑", kind: "hold", stat: "VIT", tiers: [60, 120, 240],
+    skills: ["Stone Seat", "Iron Legs", "Mountain Root"] },
+  row2k: { name: "2K Row", icon: "🚣", kind: "run", stat: "AGI", tiers: [540, 480, 420],
+    skills: ["Oarsman", "Tidebreaker", "Storm Rower"] },
   meditation: { name: "Meditation Sit", icon: "🪷", kind: "hold", stat: "WIS", tiers: [600, 1200, 2700],
     skills: ["Calm Mind", "Inner Sight", "Transcendence"] },
 };
@@ -476,6 +551,8 @@ const SETTINGS_KEY = "fittrack.settings";
 const QUESTS_KEY = "fittrack.quests";
 const UNLOCKS_KEY = "fittrack.unlocks";
 const FEATS_KEY = "fittrack.feats";
+const BOUNTIES_KEY = "fittrack.bounties";
+const SHOP_KEY = "fittrack.shop";
 const DEFAULT_SETTINGS = { goal: 150, weight: 70, units: "kg", cls: null, heroName: "", gear: {} };
 
 function load(key, fallback) {
@@ -502,6 +579,10 @@ let questAwards = load(QUESTS_KEY, []);
 // Challenge results: { id, challenge, date, weight (kg), reps, value, bw, xp }
 // (xp is the personal-record bonus; skill-rank XP is derived from ranks held)
 let feats = load(FEATS_KEY, []);
+// Completed weekly bounties: { week, id, xp }
+let bountyAwards = load(BOUNTIES_KEY, []);
+// Gold spent and battle items owned
+let shop = { spent: 0, bought: 0, items: {}, ...load(SHOP_KEY, {}) };
 // Badges and gear the player has already been told about
 let seen = { badges: [], gear: [], ...load(UNLOCKS_KEY, {}) };
 
@@ -509,6 +590,11 @@ function persist() {
   save(STORAGE_KEY, workouts);
   save(QUESTS_KEY, questAwards);
   save(FEATS_KEY, feats);
+  save(BOUNTIES_KEY, bountyAwards);
+}
+
+function saveShop() {
+  save(SHOP_KEY, shop);
 }
 
 // ---------- Units ----------
@@ -615,7 +701,31 @@ function workoutsOn(key) {
 }
 
 function totalXp() {
-  return sumBy(workouts, "xp") + sumBy(questAwards, "xp") + sumBy(feats, "xp") + skillXp();
+  return sumBy(workouts, "xp") + sumBy(questAwards, "xp") + sumBy(bountyAwards, "xp") + sumBy(feats, "xp") + skillXp();
+}
+
+// ---------- Gold ----------
+// Gold is earned from training, quests, bounties and dungeon monsters, and
+// spent in the shop. Like XP, deleting a workout takes its gold back.
+
+const GOLD_PER_QUEST = 25;
+const GOLD_PER_BOUNTY = 100;
+
+function workoutGold(minutes) {
+  return Math.floor(minutes / 2);
+}
+
+function goldEarned() {
+  return (
+    workouts.reduce((total, w) => total + workoutGold(w.duration), 0) +
+    questAwards.length * GOLD_PER_QUEST +
+    bountyAwards.length * GOLD_PER_BOUNTY +
+    (dungeonProgress().gold || 0)
+  );
+}
+
+function goldBalance() {
+  return Math.max(0, goldEarned() - shop.spent);
 }
 
 function skillXp() {
@@ -657,7 +767,7 @@ function tierText(chId, i) {
   const t = ch.tiers[i];
   if (ch.kind === "lift") return `Max ${t}× bodyweight (${fmtWeight(t * settings.weight)})`;
   if (ch.kind === "reps") return `${t} reps in one set`;
-  if (ch.kind === "run") return `Run it in ${fmtTime(t)} or less`;
+  if (ch.kind === "run") return `Finish in ${fmtTime(t)} or less`;
   return `Hold for ${fmtTime(t)}`;
 }
 
@@ -712,13 +822,13 @@ function questProgress(quest, list) {
   return { cur: sumBy(relevant, "duration"), target: quest.minutes, unit: "min" };
 }
 
-// Re-checks a day's quest after workouts change. Quests can only be earned
-// on the day itself, but deleting a workout can take a reward away again.
-// Returns the quest if it was newly completed.
 function questReward(quest) {
   return Math.round(quest.xp * (1 + badgeBuffs().questXp / 100));
 }
 
+// Re-checks a day's quest after workouts change. Quests can only be earned
+// on the day itself, but deleting a workout can take a reward away again.
+// Returns the quest if it was newly completed.
 function syncQuest(key) {
   const award = questAwards.find((a) => a.date === key);
   const isToday = key === toKey(new Date());
@@ -732,6 +842,61 @@ function syncQuest(key) {
     return { ...quest, xp: award.xp };
   }
   if (!met && award) questAwards = questAwards.filter((a) => a !== award);
+  return null;
+}
+
+// ---------- Weekly bounties ----------
+// One bounty per week (shared by all classes) for a big XP and gold reward.
+
+const BOUNTY_XP = 200;
+const BOUNTIES = [
+  { id: "wb1", name: "Iron Week", desc: "Train 150 minutes this week", minutes: 150 },
+  { id: "wb2", name: "Five Battles", desc: "Complete 5 workouts this week", sessions: 5 },
+  { id: "wb3", name: "Four Fronts", desc: "Train on 4 different days this week", days: 4 },
+  { id: "wb4", name: "The Long Road", desc: "Cover 15 km this week", km: 15 },
+  { id: "wb5", name: "Well Rounded", desc: "Train all four attributes this week", stats: 4 },
+  { id: "wb6", name: "Marathon Session", desc: "Do one 75-minute session this week", single: 75 },
+  { id: "wb7", name: "Strength Camp", desc: "Train Strength for 90 minutes this week", stat: "STR", minutes: 90 },
+  { id: "wb8", name: "Endurance Trial", desc: "Train Vitality for 120 minutes this week", stat: "VIT", minutes: 120 },
+];
+
+function weekOf(dateKey) {
+  return toKey(startOfWeek(fromKey(dateKey)));
+}
+
+function bountyFor(weekKey) {
+  const weekNumber = Math.round(fromKey(weekKey).getTime() / (7 * 86400000));
+  return BOUNTIES[((weekNumber % BOUNTIES.length) + BOUNTIES.length) % BOUNTIES.length];
+}
+
+function bountyProgress(bounty, weekKey) {
+  const list = workouts.filter((w) => weekOf(w.date) === weekKey && (!bounty.stat || activityOf(w).stat === bounty.stat));
+  if (bounty.sessions) return { cur: list.length, target: bounty.sessions, unit: "workouts" };
+  if (bounty.days) return { cur: new Set(list.map((w) => w.date)).size, target: bounty.days, unit: "days" };
+  if (bounty.km) return { cur: Math.round(sumBy(list, "distance") * 10) / 10, target: bounty.km, unit: "km" };
+  if (bounty.stats) return { cur: new Set(list.map((w) => activityOf(w).stat)).size, target: bounty.stats, unit: "attributes" };
+  if (bounty.single) return { cur: Math.max(0, ...list.map((w) => w.duration)), target: bounty.single, unit: "min" };
+  return { cur: sumBy(list, "duration"), target: bounty.minutes, unit: "min" };
+}
+
+function bountyReward() {
+  return Math.round(BOUNTY_XP * (1 + badgeBuffs().questXp / 100));
+}
+
+// Like daily quests: earned only during its week, revoked if workouts are deleted
+function syncBounty(weekKey) {
+  const award = bountyAwards.find((a) => a.week === weekKey);
+  const isCurrent = weekKey === weekOf(toKey(new Date()));
+  const bounty = award ? BOUNTIES.find((b) => b.id === award.id) : isCurrent ? bountyFor(weekKey) : null;
+  if (!bounty) return null;
+  const p = bountyProgress(bounty, weekKey);
+  const met = p.cur >= p.target;
+  if (met && !award) {
+    const xp = bountyReward();
+    bountyAwards.push({ week: weekKey, id: bounty.id, xp });
+    return { ...bounty, xp };
+  }
+  if (!met && award) bountyAwards = bountyAwards.filter((a) => a !== award);
   return null;
 }
 
@@ -775,6 +940,10 @@ function badgeContext() {
     skills: learnedSkills().reduce((total, s) => total + s.rank, 0),
     maxRank: Math.max(0, ...learnedSkills().map((s) => s.rank)),
     clears: Object.keys(dungeonProgress().cleared).length,
+    gold: goldEarned(),
+    purchases: shop.bought,
+    bounties: bountyAwards.length,
+    challengesDone: Object.keys(CHALLENGES).filter((id) => featsFor(id).length).length,
     kills: dungeonProgress().kills,
     dragon: dungeonProgress().cleared.peak ? 1 : 0,
   };
@@ -905,6 +1074,7 @@ function renderHero() {
   $("hero-title").textContent = `${titleFor(settings.cls, info.level)} · ${cls.name}`;
   $("hero-level").textContent = info.level;
   $("header-level").textContent = `LV ${info.level}`;
+  $("header-gold").textContent = `🪙 ${goldBalance()}`;
   $("xp-text").textContent = `${info.into} / ${info.need} XP`;
   $("xp-fill").style.width = `${(info.into / info.need) * 100}%`;
 
@@ -921,8 +1091,24 @@ function renderHero() {
   $("quest-reward").textContent = done ? "Complete!" : `+${questReward(quest)} XP`;
   $("quest-fill").style.width = `${Math.min(p.cur / p.target, 1) * 100}%`;
   $("quest-progress").textContent = done
-    ? `Reward claimed: +${award ? award.xp : questReward(quest)} XP`
+    ? `Reward claimed: +${award ? award.xp : questReward(quest)} XP, +${GOLD_PER_QUEST} gold`
     : `${p.cur} / ${p.target} ${p.unit}`;
+
+  // Weekly bounty
+  const weekKey = weekOf(todayKey);
+  const bountyAward = bountyAwards.find((a) => a.week === weekKey);
+  const bounty = bountyAward ? BOUNTIES.find((b) => b.id === bountyAward.id) : bountyFor(weekKey);
+  const bp = bountyProgress(bounty, weekKey);
+  const bountyDone = bp.cur >= bp.target;
+  const daysLeft = 7 - ((now.getDay() + 6) % 7);
+  $("bounty-card").classList.toggle("done", bountyDone);
+  $("bounty-name").textContent = bounty.name;
+  $("bounty-desc").textContent = bounty.desc;
+  $("bounty-reward").textContent = bountyDone ? "Complete!" : `+${bountyReward()} XP · ${GOLD_PER_BOUNTY}🪙`;
+  $("bounty-fill").style.width = `${Math.min(bp.cur / bp.target, 1) * 100}%`;
+  $("bounty-progress").textContent = bountyDone
+    ? `Bounty claimed: +${bountyAward ? bountyAward.xp : bountyReward()} XP, +${GOLD_PER_BOUNTY} gold`
+    : `${bp.cur} / ${bp.target} ${bp.unit} · ${daysLeft} day${daysLeft > 1 ? "s" : ""} left`;
 
   // Today
   $("today-minutes").textContent = sumBy(todays, "duration");
@@ -1377,16 +1563,20 @@ form.addEventListener("submit", (event) => {
     xp,
   });
   const completed = syncQuest(form.date.value);
+  const bountyDone = syncBounty(weekOf(form.date.value));
   persist();
   const unlocks = syncUnlocks();
   render();
   resetForm();
   status.textContent = "";
   showScreen("hero");
-  toast(`+${xp} XP`);
+  toast(`+${xp} XP · +${workoutGold(duration)} 🪙`);
 
   if (completed) {
-    popup("📜", "Quest Complete!", `${completed.name}: +${completed.xp} bonus XP`);
+    popup("📜", "Quest Complete!", `${completed.name}: +${completed.xp} bonus XP and ${GOLD_PER_QUEST} gold`);
+  }
+  if (bountyDone) {
+    popup("📯", "Bounty Complete!", `${bountyDone.name}: +${bountyDone.xp} XP and ${GOLD_PER_BOUNTY} gold`);
   }
   celebrate(levelBefore, unlocks);
 });
@@ -1602,7 +1792,10 @@ document.addEventListener("click", (event) => {
   if (!confirm("Delete this workout? Its XP will be removed.")) return;
   const removed = workouts.find((w) => w.id === btn.dataset.id);
   workouts = workouts.filter((w) => w !== removed);
-  if (removed) syncQuest(removed.date);
+  if (removed) {
+    syncQuest(removed.date);
+    syncBounty(weekOf(removed.date));
+  }
   persist();
   syncUnlocks();
   render();
@@ -1651,7 +1844,7 @@ settingsForm.addEventListener("submit", (event) => {
 });
 
 $("export-btn").addEventListener("click", () => {
-  const data = { settings, workouts, questAwards, feats, dungeons: dungeonProgress(), unlocks: seen };
+  const data = { settings, workouts, questAwards, bountyAwards, feats, shop, dungeons: dungeonProgress(), unlocks: seen };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
@@ -1661,11 +1854,14 @@ $("export-btn").addEventListener("click", () => {
 });
 
 $("clear-btn").addEventListener("click", () => {
-  if (!confirm("Delete ALL workouts, records, XP, levels, skills, badges, gear and dungeon progress? This cannot be undone.")) return;
+  if (!confirm("Delete ALL workouts, records, XP, gold, items, levels, skills, badges, gear and dungeon progress? This cannot be undone.")) return;
   workouts = [];
   questAwards = [];
+  bountyAwards = [];
   feats = [];
+  shop = { spent: 0, bought: 0, items: {} };
   persist();
+  saveShop();
   resetDungeons();
   syncUnlocks();
   render();

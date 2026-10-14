@@ -77,7 +77,13 @@ class means promoting that one separately.
 - **Attributes:** each activity trains STR, AGI, WIS or VIT; stats grow as you train
 - **Levels & titles:** level up as XP adds up, unlocking class titles
   (e.g. Barbarian: Wildling → Brute → Raider → Berserker → … → Godslayer)
-- **Daily quest:** a class-specific challenge each day for bonus XP
+- **Activities:** 21 kinds of training, from weights and running to climbing, rowing,
+  boxing, jump rope, dance, martial arts, pilates and rucking
+- **Daily quest:** a class-specific challenge each day (8 per class) for bonus XP and gold
+- **Weekly bounty:** one bigger goal each week (like "Train 150 minutes" or "Cover 15 km")
+  for +200 XP and 100 gold
+- **Gold:** earned from training (1 per 2 minutes), quests, bounties and dungeon monsters;
+  spend it in the **Shop** on the Fight screen
 - Streaks, weekly goal, 7-day chart, calorie estimates, and a full workout journal
 - Deleting a workout removes its XP (and the quest bonus, if it no longer qualifies)
 
@@ -99,6 +105,11 @@ record gives +30 XP.
 | 5K Run         | 35:00 → 28:00 → 22:00                   | Pathfinder, Swift Courier, Phantom Stride   |
 | Plank Hold     | 1:00 → 2:00 → 4:00                      | Stone Skin, Iron Core, Unbreakable          |
 | Meditation Sit | 10:00 → 20:00 → 45:00                   | Calm Mind, Inner Sight, Transcendence       |
+| Sit-ups        | 25 → 50 → 80 reps                       | Iron Gut, Core of Steel, Granite Core       |
+| Burpees        | 15 → 30 → 50 reps                       | Spring Step, Relentless, Unstoppable Force  |
+| Dead Hang      | 0:30 → 1:00 → 2:00                      | Firm Grip, Iron Claws, Dragon Grip          |
+| Wall Sit       | 1:00 → 2:00 → 4:00                      | Stone Seat, Iron Legs, Mountain Root        |
+| 2K Row         | 9:00 → 8:00 → 7:00                      | Oarsman, Tidebreaker, Storm Rower           |
 
 Lifts use your estimated one-rep max (weight × reps), compared to your body weight at the
 time of the lift, so ranks are fair for every size. Weights can be entered in kg or lb
@@ -106,8 +117,22 @@ time of the lift, so ranks are fair for every size. Weights can be entered in kg
 
 ## Fight: dungeons & combat skills
 
-Take your hero into **5 dungeons** (Goblin Cave → Haunted Crypt → Spider Forest → Volcano
-Depths → Dragon's Peak), each with 3 floors: two monsters and a boss. Battles are
+Take your hero into **10 dungeons**, each with 3 floors (two monsters and a boss) and its own
+battlefield backdrop:
+
+| Dungeon        | Rec. LV | Monsters (boss last)                      |
+| -------------- | ------- | ----------------------------------------- |
+| Goblin Cave    | 1       | Giant Rat, Goblin, Goblin King            |
+| Haunted Crypt  | 4       | Vampire Bat, Skeleton, Lich               |
+| Spider Forest  | 8       | Dire Wolf, Giant Spider, Elder Treant     |
+| Volcano Depths | 12      | Fire Imp, Lava Golem, Fire Drake          |
+| Dragon's Peak  | 17      | Wyvern, Ogre, Ancient Dragon              |
+| Frozen Tundra  | 20      | Frost Sprite, Yeti, Frost Giant           |
+| Sunken Temple  | 23      | Deep One, Giant Crab, Kraken              |
+| Desert Ruins   | 26      | Giant Scorpion, Mummy, Cursed Pharaoh     |
+| Shadow Realm   | 30      | Shade, Nightmare, Shadow Lord             |
+| The Abyss      | 35      | Gargoyle, Demon, Demon King               |
+ Battles are
 turn-based and play out like a classic Pokémon battle: your hero (seen from behind, in
 their class armor and equipped gear) and the monster (each with its own pixel-art sprite)
 face off on the battlefield with HP boxes, messages type out one at a time ("A wild Goblin
@@ -118,29 +143,35 @@ message box to speed through text.
 - **Your battle stats come from real training.** HP, power, armor, crit and dodge are
   based on your level and attributes, so you can't grind your way through: you get
   stronger by working out.
-- **Combat skills are unique to each class** (5 each) and are learned through
+- **Combat skills are unique to each class** (7 each, plus an Ultimate) and are learned through
   challenges: reach rank I in the matching challenge to unlock a skill, and every higher
   rank makes it stronger (+25% power per rank).
 
 | Class     | Combat skills (challenge that teaches it)                                                                    |
 | --------- | ------------------------------------------------------------------------------------------------------------ |
-| Barbarian | Crushing Blow (bench), Earthquake (squat), Rampage (deadlift), War Cry (push-ups), Thick Hide (plank)        |
-| Assassin  | Shadowstep (mile), Blade Flurry (5K), Backstab (pull-ups), Poison Blade (push-ups), Smoke Bomb (plank)      |
-| Monk      | Inner Light (meditation), Iron Body (plank), Flowing Strikes (mile), Palm of Heaven (overhead press), Dragon Kick (pull-ups) |
-| Warrior   | Shield Bash (bench), Power Strike (squat), Second Wind (5K), Battle Shout (push-ups), Execute (deadlift)    |
-| Knight    | Valiant Strike (squat), Aegis Wall (plank), Vigil (5K), Lance Charge (deadlift), Oath of Iron (push-ups)    |
+| Barbarian | Crushing Blow (bench), Earthquake (squat), Rampage (deadlift), War Cry (push-ups), Thick Hide (plank), Skull Splitter (dead hang), Bloodrage (burpees) |
+| Assassin  | Shadowstep (mile), Blade Flurry (5K), Backstab (pull-ups), Poison Blade (push-ups), Smoke Bomb (plank), Fan of Knives (burpees), Crippling Strike (2K row) |
+| Monk      | Inner Light (meditation), Iron Body (plank), Flowing Strikes (mile), Palm of Heaven (overhead press), Dragon Kick (pull-ups), Chi Wave (sit-ups), Serene Stance (wall sit) |
+| Warrior   | Shield Bash (bench), Power Strike (squat), Second Wind (5K), Battle Shout (push-ups), Execute (deadlift), Whirlwind (burpees), Iron Will (wall sit) |
+| Knight    | Valiant Strike (squat), Aegis Wall (plank), Vigil (5K), Lance Charge (deadlift), Oath of Iron (push-ups), Crusader Strike (dead hang), Steady March (2K row) |
 
 - Each class also has a passive (Barbarian lifesteal, Assassin crit, Monk regeneration,
   Warrior damage and armor, Knight extra HP and armor with power from STR and VIT).
-- Monsters have abilities (enrage, life drain, armor, evasion, poison, burn), and bosses
-  telegraph a huge attack every third turn, so that's the time to Defend.
-- Clearing a dungeon unlocks the next one and drops exclusive gear. Fights don't give XP:
-  that only comes from real exercise.
+- Monsters have abilities (enrage, life drain, armor, evasion, poison, burn, regeneration,
+  curses that weaken you, and double strikes), and bosses telegraph a huge attack every
+  third turn, so that's the time to GUARD.
+- Monsters drop gold, and clearing a dungeon for the first time pays a bonus, unlocks the
+  next dungeon and drops exclusive gear. Fights don't give XP: that only comes from real
+  exercise.
+- **Shop:** spend gold on battle items that go in your BAG: Hi-Potion, Ether (energy),
+  Antidote (cures poison, burns and curses), Fire Bomb, Power Tonic, Iron Tonic and the
+  Phoenix Feather, which automatically revives you once when you fall.
 
 ## Loot: gear & badges
 
-- **29 achievement badges**: workout milestones (1/10/50/100), streaks (3/7/30 days),
-  distance (5K, 10K, marathon total), quests, levels, attribute mastery and more.
+- **38 achievement badges**: workout milestones (1/10/50/100/250), streaks (3/7/30 days),
+  distance (5K, 10K, marathon total), quests, bounties, gold, shopping, monsters slain,
+  dungeons, every challenge recorded, levels (5/10/20/30) and attribute mastery.
   Locked badges show your progress toward them.
 - **Every badge grants a permanent buff**, and buffs stack. The Loot screen lists each
   badge's buff and an **Active Buffs** total. XP buffs apply to workouts, quests and
@@ -151,7 +182,8 @@ message box to speed through text.
 | XP | Veteran +5% · Iron Habit +10% · Dragonslayer +10% (all workouts); Iron Body / Wind Runner / Inner Calm / Trailblazer +10% (STR / AGI / WIS / VIT workouts); Quest Hunter +25% · Questmaster +50% (quest XP); Personal Best +50% (PR XP) |
 | Battle stats | First Blood +5% HP · Endurance +10% HP · Legend +10% HP & power · Centurion +10% power · Rising Hero +5% power · Monster Hunter +5% power · Champion +10% armor · On Fire +3% crit · Grandmaster +5% crit · First 5K +2% dodge · 10K Club +3% dodge · Jack of All Trades +2 every attribute |
 | Dungeon perks | Adventurer +1 potion · Explorer potions heal +10% · Marathoner 1% HP regen per turn · Unstoppable +15 starting energy · Goal Crusher +5 energy per turn · Skilled skills cost 5 less · Dungeon Delver +10% boss damage |
-- **21 pieces of unlockable gear** in 4 slots: headgear, capes, companion pets and
+| Newer badges | Realm Walker +10% power · Slayer +5% crit · Treasure Hunter +1 potion · Good Customer potions heal +10% · Bounty Hunter +25% quest XP · Legendary Hunter +10% XP · Iron Devotion +10% armor · Completionist +3 every attribute · Mythic +15% HP & +10% power |
+- **31 pieces of unlockable gear** in 4 slots: headgear, capes, companion pets and
   auras. Unlock them by leveling up, earning badges or clearing dungeons, and equip them in **Loot**:
   they appear on your pixel hero. Top-tier items give a permanent +5% XP bonus each
   (applies to new workouts).
@@ -190,5 +222,5 @@ The app must be served over HTTPS to install. The easiest free option is GitHub 
 | `manifest.json`    | Makes the app installable                   |
 | `icons/`, `fonts/` | App icons and the Press Start 2P pixel font (OFL) |
 
-When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v13`) so installed
+When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v14`) so installed
 copies pick up the update.

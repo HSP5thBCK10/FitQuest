@@ -8,6 +8,9 @@
 //   armored: double armor
 //   evasive: 20% chance to dodge each of your hits
 //   poison / burn: 35% chance per hit to deal damage over 3 turns
+//   regen:   heals 2.5% of its max HP every turn
+//   curse:   35% chance per hit to cut your damage by 25% for 2 turns
+//   double:  attacks twice per turn at 55% damage each
 const MONSTERS = {
   rat: { name: "Giant Rat" },
   goblin: { name: "Goblin", ability: "enrage" },
@@ -24,6 +27,21 @@ const MONSTERS = {
   wyvern: { name: "Wyvern", ability: "evasive" },
   ogre: { name: "Ogre", ability: "enrage" },
   dragon: { name: "Ancient Dragon", ability: "burn", boss: true },
+  sprite: { name: "Frost Sprite", ability: "evasive" },
+  yeti: { name: "Yeti", ability: "enrage" },
+  frost_giant: { name: "Frost Giant", ability: "armored", boss: true },
+  fishman: { name: "Deep One", ability: "drain" },
+  crab: { name: "Giant Crab", ability: "armored" },
+  kraken: { name: "Kraken", ability: "double", boss: true },
+  scorpion: { name: "Giant Scorpion", ability: "poison" },
+  mummy: { name: "Mummy", ability: "regen" },
+  pharaoh: { name: "Cursed Pharaoh", ability: "curse", boss: true },
+  shade: { name: "Shade", ability: "evasive" },
+  nightmare: { name: "Nightmare", ability: "curse" },
+  shadow_lord: { name: "Shadow Lord", ability: "drain", boss: true },
+  gargoyle: { name: "Gargoyle", ability: "armored" },
+  demon: { name: "Demon", ability: "burn" },
+  demon_king: { name: "Demon King", ability: "double", boss: true },
 };
 
 // Each dungeon has 3 floors; the boss on the last floor is one level higher
@@ -33,6 +51,11 @@ const DUNGEONS = [
   { id: "forest", name: "Spider Forest", icon: "🌲", level: 8, floors: ["wolf", "spider", "treant"] },
   { id: "volcano", name: "Volcano Depths", icon: "🌋", level: 12, floors: ["imp", "golem", "drake"] },
   { id: "peak", name: "Dragon's Peak", icon: "🏔️", level: 17, floors: ["wyvern", "ogre", "dragon"] },
+  { id: "tundra", name: "Frozen Tundra", icon: "❄️", level: 20, floors: ["sprite", "yeti", "frost_giant"] },
+  { id: "temple", name: "Sunken Temple", icon: "🌊", level: 23, floors: ["fishman", "crab", "kraken"] },
+  { id: "ruins", name: "Desert Ruins", icon: "🏜️", level: 26, floors: ["scorpion", "mummy", "pharaoh"] },
+  { id: "shadow", name: "Shadow Realm", icon: "🌑", level: 30, floors: ["shade", "nightmare", "shadow_lord"] },
+  { id: "abyss", name: "The Abyss", icon: "🔥", level: 35, floors: ["gargoyle", "demon", "demon_king"] },
 ];
 
 // Combat skills are unique to each class. Each is taught by a challenge:
@@ -49,6 +72,10 @@ const CLASS_SKILLS = {
       desc: "+40% damage for 3 turns", effect: { buff: { atk: 0.4, turns: 3 } } },
     { id: "thick_hide", name: "Thick Hide", icon: "🦏", challenge: "plank", cost: 25,
       desc: "Block 60% of damage for 2 turns", effect: { buff: { block: 0.6, turns: 2 } } },
+    { id: "skull_splitter", name: "Skull Splitter", icon: "🪓", challenge: "deadhang", cost: 35,
+      desc: "160% damage with +30% crit chance", effect: { damage: 1.6, crit: 30 } },
+    { id: "bloodrage", name: "Bloodrage", icon: "🩸", challenge: "burpees", cost: 30,
+      desc: "Heal 10% of max HP and +30% damage for 2 turns", effect: { heal: 0.1, buff: { atk: 0.3, turns: 2 } } },
   ],
   assassin: [
     { id: "shadowstep", name: "Shadowstep", icon: "👤", challenge: "mile", cost: 40,
@@ -61,6 +88,10 @@ const CLASS_SKILLS = {
       desc: "90% damage and poison for 3 turns", effect: { damage: 0.9, poison: { pct: 0.35, turns: 3 } } },
     { id: "smoke_bomb", name: "Smoke Bomb", icon: "💨", challenge: "plank", cost: 20,
       desc: "+50% dodge chance for 2 turns", effect: { buff: { dodge: 50, turns: 2 } } },
+    { id: "fan_of_knives", name: "Fan of Knives", icon: "🔪", challenge: "burpees", cost: 40,
+      desc: "5 quick hits of 35% damage", effect: { damage: 0.35, hits: 5 } },
+    { id: "crippling_strike", name: "Crippling Strike", icon: "🦵", challenge: "row2k", cost: 35,
+      desc: "110% damage with a 50% chance to stun", effect: { damage: 1.1, stun: 0.5 } },
   ],
   monk: [
     { id: "inner_light", name: "Inner Light", icon: "✨", challenge: "meditation", cost: 40,
@@ -73,6 +104,10 @@ const CLASS_SKILLS = {
       desc: "220% damage that ignores armor", effect: { damage: 2.2, pierce: true } },
     { id: "dragon_kick", name: "Dragon Kick", icon: "🦶", challenge: "pullups", cost: 40,
       desc: "150% damage with a 40% chance to stun", effect: { damage: 1.5, stun: 0.4 } },
+    { id: "chi_wave", name: "Chi Wave", icon: "🌀", challenge: "situps", cost: 35,
+      desc: "120% damage and heal 10% of max HP", effect: { damage: 1.2, heal: 0.1 } },
+    { id: "serene_stance", name: "Serene Stance", icon: "🧘", challenge: "wallsit", cost: 35,
+      desc: "Block 30% of damage and heal 6% per turn for 3 turns", effect: { buff: { block: 0.3, regen: 0.06, turns: 3 } } },
   ],
   warrior: [
     { id: "shield_bash", name: "Shield Bash", icon: "🛡️", challenge: "bench", cost: 30,
@@ -85,6 +120,10 @@ const CLASS_SKILLS = {
       desc: "+30% damage and +30% armor for 3 turns", effect: { buff: { atk: 0.3, def: 0.3, turns: 3 } } },
     { id: "execute", name: "Execute", icon: "🪓", challenge: "deadlift", cost: 40,
       desc: "150% damage, tripled against foes under 30% HP", effect: { damage: 1.5, execute: 0.3 } },
+    { id: "whirlwind", name: "Whirlwind", icon: "🌪️", challenge: "burpees", cost: 40,
+      desc: "3 spinning hits of 60% damage", effect: { damage: 0.6, hits: 3 } },
+    { id: "iron_will", name: "Iron Will", icon: "🗿", challenge: "wallsit", cost: 30,
+      desc: "Block 50% of damage for 2 turns and cure poison", effect: { buff: { block: 0.5, turns: 2 }, cleanse: true } },
   ],
   knight: [
     { id: "valiant_strike", name: "Valiant Strike", icon: "⚜️", challenge: "squat", cost: 35,
@@ -97,6 +136,10 @@ const CLASS_SKILLS = {
       desc: "A thundering charge for 220% damage", effect: { damage: 2.2 } },
     { id: "oath_of_iron", name: "Oath of Iron", icon: "🤞", challenge: "pushups", cost: 30,
       desc: "+30% damage for 3 turns and cure poison", effect: { buff: { atk: 0.3, turns: 3 }, cleanse: true } },
+    { id: "crusader_strike", name: "Crusader Strike", icon: "✝️", challenge: "deadhang", cost: 35,
+      desc: "140% damage and heal 8% of max HP", effect: { damage: 1.4, heal: 0.08 } },
+    { id: "steady_march", name: "Steady March", icon: "🥾", challenge: "row2k", cost: 30,
+      desc: "Heal 12% of max HP and +20% armor for 3 turns", effect: { heal: 0.12, buff: { def: 0.2, turns: 3 } } },
   ],
 };
 
@@ -117,14 +160,14 @@ const ULTIMATE_SKILLS = {
 
 const CLASS_PASSIVES = {
   barbarian: "Bloodlust: +20% max HP, muscle (STR) adds to HP, and heal 15% of damage dealt",
-  assassin: "Killer Instinct: +10% crit chance",
+  assassin: "Killer Instinct: +10% crit chance, and running stamina (AGI) adds to HP",
   monk: "Inner Peace: heal 3% HP every turn",
   warrior: "Veteran: +15% damage and +15% armor",
   knight: "Endurance: +20% max HP, +10% armor, and power from both STR and VIT",
   chieftain: "Warchief: +25% max HP, +5% power, muscle (STR) adds to HP, and heal 20% of damage dealt",
   master: "Enlightenment: heal 3.5% HP every turn, +5% dodge and +5% power",
   gladiator: "Arena Champion: +25% damage, +15% armor and +8% crit chance",
-  phantom: "Wraith: +15% crit chance, +5% dodge and +5% power",
+  phantom: "Wraith: +15% crit chance, +5% dodge, +5% power, and AGI adds to HP",
   paladin: "Divine Endurance: +25% max HP, +15% armor, and power from STR and VIT",
 };
 
@@ -132,11 +175,12 @@ const CLASS_PASSIVES = {
 const balanced = (a) => ((a.STR + a.AGI + a.WIS + a.VIT) / 4) * 1.3;
 const strAndVit = (a) => (a.STR + a.VIT) * 0.5;
 const muscle = (a) => a.VIT + a.STR * 0.5; // a barbarian's muscle mass counts toward health
+const stamina = (a) => a.VIT + a.AGI * 0.3; // an assassin's running stamina counts toward health
 const COMBAT_PROFILES = {
   barbarian: { primary: (a) => a.STR, toughness: muscle, hp: 1.2, lifesteal: 0.15 },
   chieftain: { primary: (a) => a.STR, toughness: muscle, hp: 1.25, pow: 1.05, lifesteal: 0.2 },
-  assassin: { primary: (a) => a.AGI, crit: 10 },
-  phantom: { primary: (a) => a.AGI, pow: 1.05, crit: 15, dodge: 5 },
+  assassin: { primary: (a) => a.AGI, toughness: stamina, crit: 10 },
+  phantom: { primary: (a) => a.AGI, toughness: stamina, pow: 1.05, crit: 15, dodge: 5 },
   monk: { primary: (a) => a.WIS, regen: 0.03 },
   master: { primary: (a) => a.WIS, pow: 1.05, dodge: 5, regen: 0.035 },
   warrior: { primary: balanced, pow: 1.15, def: 1.15 },
@@ -144,6 +188,35 @@ const COMBAT_PROFILES = {
   knight: { primary: strAndVit, hp: 1.2, def: 1.1 },
   paladin: { primary: strAndVit, hp: 1.25, def: 1.15 },
 };
+
+// Battle items, bought with gold on the Fight screen and used from the BAG
+const SHOP_ITEMS = {
+  hipotion: { name: "Hi-Potion", icon: "🧴", price: 40, desc: "Restores 70% of your HP" },
+  ether: { name: "Ether", icon: "🔷", price: 35, desc: "Restores 50 energy" },
+  antidote: { name: "Antidote", icon: "🌿", price: 20, desc: "Cures poison, burns and curses" },
+  bomb: { name: "Fire Bomb", icon: "💣", price: 60, desc: "Blasts 30% of a monster's HP (10% for bosses)" },
+  power_tonic: { name: "Power Tonic", icon: "🍷", price: 50, desc: "+30% damage for 3 turns" },
+  iron_tonic: { name: "Iron Tonic", icon: "🥛", price: 50, desc: "+40% armor for 3 turns" },
+  phoenix: { name: "Phoenix Feather", icon: "🪶", price: 150, desc: "Revives you at 40% HP when you fall (used automatically)" },
+};
+
+function buyItem(id) {
+  const item = SHOP_ITEMS[id];
+  if (!item || goldBalance() < item.price) return;
+  shop.spent += item.price;
+  shop.bought++;
+  shop.items[id] = (shop.items[id] || 0) + 1;
+  saveShop();
+  const level = levelInfo(totalXp()).level;
+  const unlocks = syncUnlocks();
+  render();
+  toast(`Bought ${item.name}!`);
+  celebrate(level, unlocks);
+}
+
+function monsterGold(e) {
+  return Math.round((e.level * 4 + 5) * (e.boss ? 3 : 1));
+}
 
 const FLOOR_LEVELS = [0, 0, 1];
 const DUNGEONS_KEY = "fittrack.dungeons";
@@ -234,8 +307,9 @@ function monsterOnFloor(dungeon, floor) {
 
 function makeMonster(id, level) {
   const m = MONSTERS[id];
-  // Deeper dungeons get a little tougher to keep pace with badge buffs
-  const scale = 1 + level * 0.006;
+  // Deeper dungeons get tougher to keep pace with badge buffs and skill ranks,
+  // ramping up faster past level 18
+  const scale = 1 + level * 0.006 + Math.max(0, level - 18) * 0.035;
   const hp = Math.round((40 + level * 16 + level * level * 0.6) * scale * (m.boss ? 2 : 1));
   return {
     ...m,
@@ -366,7 +440,7 @@ function heroStrike(mult, opts = {}) {
     let m = mult * (e.boss ? 1 + battle.stats.bossDmg : 1);
     if (opts.execute && e.hp / e.maxHp < opts.execute) m *= 3;
     const crit = Math.random() * 100 < battle.stats.crit + (opts.crit || 0);
-    const raw = battle.stats.pow * m * (1 + buffTotal("atk")) * (crit ? 1.75 : 1);
+    const raw = battle.stats.pow * m * (1 + buffTotal("atk")) * (crit ? 1.75 : 1) * (battle.curse ? 0.75 : 1);
     const dmg = Math.max(1, Math.round(mitigate(raw, opts.pierce ? 0 : e.def) * rand(0.9, 1.1)));
     e.hp = Math.max(0, e.hp - dmg);
     total += dmg;
@@ -419,8 +493,9 @@ function useSkill(skill) {
     const healed = heal(fx.heal * power);
     addLog(healed ? `${heroName()} recovered ${healed} HP!` : `${heroName()}'s HP is already full!`);
   }
-  if (fx.cleanse && battle.dot) {
+  if (fx.cleanse && (battle.dot || battle.curse)) {
     battle.dot = null;
+    battle.curse = 0;
     addLog(`${heroName()} was cured!`);
   }
   if (fx.buff) {
@@ -430,6 +505,34 @@ function useSkill(skill) {
     if (b.regen) b.regen *= power;
     if (b.block) b.block = Math.min(b.block + 0.1 * (skill.rank - 1), 0.8);
     if (b.dodge) b.dodge += 10 * (skill.rank - 1);
+    battle.buffs.push(b);
+    addLog(buffMessage(b));
+  }
+}
+
+function useItem(id) {
+  const item = SHOP_ITEMS[id];
+  const e = battle.enemy;
+  shop.items[id]--;
+  saveShop();
+  addLog(`${heroName()} used a ${item.name}!`);
+  if (id === "hipotion") {
+    const healed = heal(0.7);
+    addLog(healed ? `${heroName()} recovered ${healed} HP!` : `${heroName()}'s HP is already full!`);
+  } else if (id === "ether") {
+    battle.energy += 50;
+    addLog(`${heroName()}'s energy surged!`);
+  } else if (id === "antidote") {
+    battle.dot = null;
+    battle.curse = 0;
+    addLog(`${heroName()} feels purified!`);
+  } else if (id === "bomb") {
+    const dmg = Math.round(e.maxHp * (e.boss ? 0.1 : 0.3));
+    e.hp = Math.max(0, e.hp - dmg);
+    floatText("enemy", String(dmg), "crit");
+    addLog("Ka-boom!");
+  } else if (id === "power_tonic" || id === "iron_tonic") {
+    const b = id === "power_tonic" ? { atk: 0.3, turns: 3, name: "Power" } : { def: 0.4, turns: 3, name: "Iron" };
     battle.buffs.push(b);
     addLog(buffMessage(b));
   }
@@ -476,6 +579,10 @@ function enemyStrike(mult, announce = true) {
       floatText("enemy", `+${healed}`, "heal");
     }
   }
+  if (e.ability === "curse" && !battle.curse && Math.random() < 0.35) {
+    battle.curse = 2;
+    addLog(`${heroName()} was cursed! Damage fell!`);
+  }
   if ((e.ability === "poison" || e.ability === "burn") && !battle.dot && Math.random() < 0.35) {
     const label = e.ability === "burn" ? "Burn" : "Poison";
     battle.dot = { dmg: Math.max(1, Math.round(e.atk * 0.3)), turns: 3, label };
@@ -493,6 +600,11 @@ function enemyTurn() {
     e.dot.turns--;
     if (!e.dot.turns) e.dot = null;
     if (e.hp <= 0) return;
+  }
+  if (e.ability === "regen" && e.hp < e.maxHp) {
+    e.hp = Math.min(e.maxHp, e.hp + Math.round(e.maxHp * 0.025));
+    addLog(`${foe()} regenerates!`);
+    floatText("enemy", "+", "heal");
   }
   if (e.stun) {
     e.stun = false;
@@ -520,6 +632,14 @@ function enemyTurn() {
       return;
     }
   }
+  if (e.ability === "double") {
+    enemyStrike(0.55);
+    if (battle.hp > 0) {
+      addLog(`${foe()} strikes again!`);
+      enemyStrike(0.55, false);
+    }
+    return;
+  }
   enemyStrike(1);
 }
 
@@ -533,6 +653,7 @@ function endRound() {
   }
   const regen = battle.stats.regen + buffTotal("regen");
   if (regen && battle.hp > 0) heal(regen);
+  if (battle.curse) battle.curse--;
   battle.energy = Math.min(MAX_ENERGY, battle.energy + battle.stats.energyPerTurn);
   battle.buffs = battle.buffs.map((b) => ({ ...b, turns: b.turns - 1 })).filter((b) => b.turns > 0);
 }
@@ -542,6 +663,8 @@ async function act(action) {
   const skill = combatSkills().find((s) => s.id === action);
   if (skill && (skill.rank < 1 || battle.energy < skill.cost)) return;
   if (action === "potion" && battle.potions <= 0) return;
+  const itemId = action.startsWith("item:") ? action.slice(5) : null;
+  if (itemId && (!(shop.items[itemId] > 0) || itemId === "phoenix")) return;
 
   battle.busy = true;
   if (action === "attack") {
@@ -557,6 +680,8 @@ async function act(action) {
     addLog(`${heroName()} drank a potion!`);
     const healed = heal(battle.stats.potionHeal);
     addLog(healed ? `${heroName()} recovered ${healed} HP!` : `${heroName()}'s HP is already full!`);
+  } else if (itemId) {
+    useItem(itemId);
   } else if (skill) {
     useSkill(skill);
   }
@@ -580,7 +705,12 @@ async function act(action) {
 async function enemyDefeated() {
   battle.events.push({ type: "faint", target: "enemy" });
   addLog(`${foe()} fainted!`);
-  dungeonProgress().kills++;
+  const gold = monsterGold(battle.enemy);
+  addLog(`${heroName()} found ${gold} gold!`);
+  const progress = dungeonProgress();
+  progress.kills++;
+  progress.gold = (progress.gold || 0) + gold;
+  battle.goldFound = (battle.goldFound || 0) + gold;
   saveDungeons();
   if (!(await present())) return;
 
@@ -601,7 +731,10 @@ async function enemyDefeated() {
 function victory() {
   const progress = dungeonProgress();
   const first = !progress.cleared[battle.dungeon.id];
+  const bonus = first ? 50 * (DUNGEONS.indexOf(battle.dungeon) + 1) : 0;
   if (first) progress.cleared[battle.dungeon.id] = toKey(new Date());
+  progress.gold = (progress.gold || 0) + bonus;
+  battle.goldFound = (battle.goldFound || 0) + bonus;
   saveDungeons();
   battle.over = true;
 
@@ -612,13 +745,27 @@ function victory() {
   showBattleEnd(
     "Victory!",
     first
-      ? `You conquered ${battle.dungeon.name}!${next ? ` ${next.name} is now open.` : " You have conquered every dungeon!"}`
-      : `You conquered ${battle.dungeon.name} again.`
+      ? `You conquered ${battle.dungeon.name}! First-clear bonus: ${bonus} gold (${battle.goldFound} total).${next ? ` ${next.name} is now open.` : " You have conquered every dungeon!"}`
+      : `You conquered ${battle.dungeon.name} again and found ${battle.goldFound} gold.`
   );
   celebrate(level, unlocks);
 }
 
 async function defeat() {
+  if (shop.items.phoenix > 0) {
+    shop.items.phoenix--;
+    saveShop();
+    battle.hp = Math.round(battle.stats.maxHp * 0.4);
+    battle.dot = null;
+    addLog("The Phoenix Feather bursts into flame!");
+    floatText("hero", `+${battle.hp}`, "heal");
+    addLog(`${heroName()} rose from the ashes!`);
+    if (!(await present())) return;
+    battle.busy = false;
+    battle.menu = "main";
+    renderBattle();
+    return;
+  }
   battle.events.push({ type: "faint", target: "hero" });
   addLog(`${heroName()} fainted...`);
   if (!(await present())) return;
@@ -738,6 +885,9 @@ const ABILITY_WARNINGS = {
   evasive: "It moves too fast to see!",
   poison: "Its fangs drip with venom!",
   burn: "Heat radiates from its scales!",
+  regen: "Its wounds close before your eyes!",
+  curse: "A dark curse hangs around it!",
+  double: "It strikes with blinding speed!",
 };
 
 function hpClass(pct) {
@@ -787,6 +937,7 @@ function renderBattle() {
   $("b-hero-level").textContent = `Lv${levelInfo(totalXp()).level}`;
   const heroStatus = b.buffs.map((x) => ["buff", x.name.toUpperCase()]);
   if (b.dot) heroStatus.push([b.dot.label === "Burn" ? "brn" : "psn", b.dot.label === "Burn" ? "BRN" : "PSN"]);
+  if (b.curse) heroStatus.push(["crs", "CURSE"]);
   $("b-hero-status").innerHTML = chips(heroStatus);
   updateBars();
   renderCommand();
@@ -834,6 +985,17 @@ function renderCommand() {
         <span class="move-name">🧪 Potion ×${b.potions}</span>
         <span class="move-meta">Restores ${Math.round(b.stats.potionHeal * 100)}% HP</span>
       </button>
+      ${Object.entries(SHOP_ITEMS)
+        .filter(([id]) => shop.items[id] > 0)
+        .map(([id, item]) =>
+          id === "phoenix"
+            ? `<p class="move-note">🪶 Phoenix Feather ×${shop.items[id]}: revives you automatically</p>`
+            : `<button type="button" class="move" data-action="item:${id}">
+                 <span class="move-name">${item.icon} ${item.name} ×${shop.items[id]}</span>
+                 <span class="move-meta">${item.desc}</span>
+               </button>`
+        )
+        .join("")}
       <div class="move-footer">
         <span class="pixel">Bag</span>
         <button type="button" class="cmd back pixel" data-menu="main">Back</button>
@@ -917,6 +1079,22 @@ function renderFight() {
     })
     .join("");
 
+  $("shop-gold").textContent = `🪙 ${goldBalance()}`;
+  $("shop-list").innerHTML = Object.entries(SHOP_ITEMS)
+    .map(([id, item]) => {
+      const owned = shop.items[id] || 0;
+      return `
+        <div class="shop-item">
+          <span class="workout-icon" aria-hidden="true">${item.icon}</span>
+          <span class="workout-info">
+            <span class="workout-name">${item.name}${owned ? ` <span class="owned">×${owned}</span>` : ""}</span>
+            <span class="workout-meta">${item.desc}</span>
+          </span>
+          <button type="button" class="btn pixel buy-btn" data-buy="${id}" ${goldBalance() < item.price ? "disabled" : ""}>${item.price}🪙</button>
+        </div>`;
+    })
+    .join("");
+
   const progress = dungeonProgress();
   $("dungeon-list").innerHTML = DUNGEONS.map((d, i) => {
     const open = dungeonUnlocked(i);
@@ -936,6 +1114,11 @@ function renderFight() {
   }).join("");
   $("kill-count").textContent = `${progress.kills} slain`;
 }
+
+document.getElementById("shop-list").addEventListener("click", (event) => {
+  const btn = event.target.closest(".buy-btn");
+  if (btn && !btn.disabled) buyItem(btn.dataset.buy);
+});
 
 document.getElementById("dungeon-list").addEventListener("click", (event) => {
   const btn = event.target.closest(".enter-btn");
