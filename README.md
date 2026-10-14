@@ -183,12 +183,12 @@ The app must be served over HTTPS to install. The easiest free option is GitHub 
 | ------------------ | ------------------------------------------- |
 | `index.html`       | Screens: Hero, Train, Fight, Loot, Journal, Camp, class picker, battle |
 | `app.css`          | Pixel/retro game styling                    |
-| `app.js`           | Classes, XP, quests, challenges, skills, badges, gear, sprites |
+| `app.js`           | Classes, XP, quests, challenges, skills, badges, gear |
 | `battle.js`        | Dungeons, monsters, class combat skills, turn-based battles |
-| `battle-art.js`    | Pixel-art battle sprites: monsters and hero back views |
+| `art.js`           | Pixel art: hero front and back views, gear, pets and monsters |
 | `sw.js`            | Service worker for offline use              |
 | `manifest.json`    | Makes the app installable                   |
 | `icons/`, `fonts/` | App icons and the Press Start 2P pixel font (OFL) |
 
-When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v12`) so installed
+When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v13`) so installed
 copies pick up the update.

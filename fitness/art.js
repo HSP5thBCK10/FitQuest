@@ -1,5 +1,5 @@
-// ---------- Battle sprites ----------
-// Detailed 32x32 pixel art for battles, built from simple shapes. The renderer
+// ---------- Pixel art ----------
+// Detailed 32x32 pixel art for heroes, gear and monsters, built from simple shapes. The renderer
 // rasterizes the shapes, then adds shading (light from the top left) and a dark
 // outline, so every sprite gets the same polished look.
 //
@@ -457,24 +457,252 @@ const HERO_BACK_ART = {
   ],
 };
 
+// ---------- Gear ----------
+// Headgear sits on top of the head; hy is the y of the top of the head.
+
+function headGearShapes(item, hy) {
+  const c = item.colors;
+  const crown = (main, gem) => [
+    ["poly", [[10, hy + 2], [10, hy - 3], [13, hy], [16, hy - 4], [19, hy], [22, hy - 3], [22, hy + 2]], main],
+    ["px", [[13, hy + 1], [19, hy + 1]], gem, { flat: true }],
+    ["px", [[16, hy - 1]], gem, { flat: true }],
+  ];
+  return {
+    leaf_circlet: [
+      ["line", 10, hy + 1, 22, hy + 1, c.G],
+      ["ellipse", 11, hy, 1.6, 1.2, c.g], ["ellipse", 14, hy - 0.5, 1.6, 1.2, c.g],
+      ["ellipse", 18, hy - 0.5, 1.6, 1.2, c.g], ["ellipse", 21, hy, 1.6, 1.2, c.g],
+    ],
+    iron_crown: crown(c.m, "#64748b"),
+    gold_crown: crown(c.y, c.r),
+    goblin_crown: crown(c.g, c.y),
+    dragon_helm: [
+      ["poly", [[10, hy + 1], [5, hy - 5], [11, hy - 1]], c.r],
+      ["poly", [[22, hy + 1], [27, hy - 5], [21, hy - 1]], c.r],
+      ...crown(c.y, c.r),
+    ],
+    halo: [
+      ["line", 12, hy - 5, 20, hy - 5, c.y, { flat: true }],
+      ["line", 12, hy - 3, 20, hy - 3, c.y, { flat: true }],
+      ["px", [[11, hy - 4], [21, hy - 4]], c.y, { flat: true }],
+    ],
+  }[item.id];
+}
+
+// Pets on a 12x12 grid
+const PET_ART = {
+  slime: [
+    ["ellipse", 6, 8, 5.5, 4, "#4ade80"],
+    ["ellipse", 4.5, 6.5, 1.2, 0.8, "#dcfce7", { flat: true }],
+    ["px", [[4, 8], [7, 8]], "#052e16", { flat: true }],
+  ],
+  cat: [
+    ["line", 9, 9, 11, 5, "#ea580c"],
+    ["ellipse", 7, 9, 4, 2.5, "#fb923c"],
+    ["ellipse", 4.5, 5.5, 3.5, 3, "#fb923c"],
+    ["poly", [[1, 4], [2, 0], [4, 3]], "#fb923c"],
+    ["poly", [[8, 4], [7, 0], [5, 3]], "#fb923c"],
+    ["px", [[3, 5], [6, 5]], "#111827", { flat: true }],
+    ["px", [[4, 7], [5, 7]], "#fdba74", { flat: true }],
+  ],
+  owl: [
+    ["ellipse", 6, 7, 4.5, 5, "#a16207"],
+    ["ellipse", 6, 8, 3, 3, "#fde68a"],
+    ["ellipse", 4.3, 5, 1.6, 1.6, "#fef9c3", { flat: true }],
+    ["ellipse", 7.7, 5, 1.6, 1.6, "#fef9c3", { flat: true }],
+    ["px", [[4, 5], [7, 5]], "#111827", { flat: true }],
+    ["px", [[6, 7]], "#f97316", { flat: true }],
+    ["poly", [[2, 3], [3, 0], [4, 2]], "#a16207"],
+    ["poly", [[10, 3], [9, 0], [8, 2]], "#a16207"],
+  ],
+  dragon: [
+    ["poly", [[6, 5], [11, 1], [11, 6]], "#991b1b"],
+    ["line", 8, 10, 11, 11, "#b91c1c"],
+    ["ellipse", 7, 8.5, 4, 3, "#dc2626"],
+    ["ellipse", 3.5, 5, 3, 2.5, "#ef4444"],
+    ["px", [[2, 2], [4, 2]], "#facc15", { flat: true }],
+    ["px", [[2, 5]], "#111827", { flat: true }],
+    ["px", [[6, 9], [8, 9]], "#fca5a5", { flat: true }],
+  ],
+  sprout: [
+    ["rect", 4, 6, 4, 6, "#92400e"],
+    ["ellipse", 3, 4, 3, 2.2, "#22c55e"],
+    ["ellipse", 9, 4, 3, 2.2, "#16a34a"],
+    ["ellipse", 6, 2, 2, 2, "#4ade80"],
+    ["px", [[5, 8], [7, 8]], "#111827", { flat: true }],
+  ],
+};
+
+function petRects(id, ox, oy) {
+  return gridToRects(rasterize(PET_ART[id], null, 12), 12, ox, oy);
+}
+
+function auraRects(aura, size, cx, cy, scale = 1) {
+  let rects = "";
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const d = Math.hypot(x - cx, y - cy) / scale;
+      const tone = d < 9 ? 2 : d < 13 ? 1 : d < 17 ? 0 : -1;
+      if (tone >= 0) rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${aura.tones[tone]}" opacity="0.6"/>`;
+    }
+  }
+  return rects;
+}
+
+// ---------- Hero front views ----------
+// Used everywhere outside battle. headTop is where headgear sits.
+
+const HERO_FRONT_ART = {
+  barbarian: {
+    headTop: 4,
+    shapes: [
+      ["line", 27, 5, 24, 26, "b"],
+      ["poly", [[25, 3], [31, 6], [30, 11], [26, 9]], "m"],
+      ["rect", 11, 24, 4, 5, "s"],
+      ["rect", 18, 24, 4, 5, "s"],
+      ["rect", 10, 28, 6, 3, "d"],
+      ["rect", 17, 28, 6, 3, "d"],
+      ["ellipse", 16, 19, 9, 6.5, "s"],
+      ["ellipse", 6, 18, 3, 5, "s"],
+      ["ellipse", 26, 18, 3, 5, "s"],
+      ["rect", 4, 21, 5, 1, "b"],
+      ["rect", 24, 21, 5, 1, "b"],
+      ["line", 11, 16, 15, 17, "d", { flat: true }],
+      ["line", 21, 16, 17, 17, "d", { flat: true }],
+      ["px", [[15, 19], [17, 19], [15, 21], [17, 21]], "d", { flat: true }],
+      ["rect", 10, 22, 13, 5, "f"],
+      ["rect", 10, 22, 13, 1, "b"],
+      ["ellipse", 16, 10, 5.5, 5, "s"],
+      ["ellipse", 16, 14, 4.5, 3.5, "h"],
+      ["ellipse", 16, 6.5, 5.5, 3, "m"],
+      ["poly", [[11, 7], [5, 1], [8, 8]], "w"],
+      ["poly", [[21, 7], [27, 1], [24, 8]], "w"],
+      ["px", [[14, 10], [18, 10]], "e", { flat: true }],
+    ],
+  },
+  assassin: {
+    headTop: 4,
+    shapes: [
+      ["line", 5, 18, 2, 26, "a"],
+      ["line", 27, 18, 30, 26, "a"],
+      ["rect", 12, 24, 3, 7, "c"],
+      ["rect", 17, 24, 3, 7, "c"],
+      ["poly", [[10, 15], [22, 15], [24, 27], [8, 27]], "c"],
+      ["poly", [[13, 15], [19, 15], [19, 27], [13, 27]], "C"],
+      ["ellipse", 7, 19, 2.5, 4.5, "c"],
+      ["ellipse", 25, 19, 2.5, 4.5, "c"],
+      ["px", [[5, 23], [27, 23]], "s", { flat: true }],
+      ["rect", 10, 22, 12, 2, "b"],
+      ["ellipse", 16, 10, 6.5, 6.5, "C"],
+      ["poly", [[16, 3], [21, 8], [16, 6], [11, 8]], "c"],
+      ["ellipse", 16, 11.5, 4.5, 3.5, "k", { flat: true }],
+      ["px", [[14, 11], [18, 11]], "g", { flat: true }],
+      ["rect", 12, 13, 8, 2, "c"],
+    ],
+  },
+  monk: {
+    headTop: 5,
+    shapes: [
+      ["ellipse", 16, 26, 13, 5.5, "O"],
+      ["ellipse", 16, 21, 9, 7, "o"],
+      ["poly", [[11, 15], [16, 23], [21, 15]], "O"],
+      ["line", 8, 21, 24, 21, "r"],
+      ["ellipse", 16, 21.5, 3, 2.5, "s"],
+      ["ellipse", 16, 11, 5.5, 5.5, "s"],
+      ["line", 13, 11, 14, 11, "k", { flat: true }],
+      ["line", 18, 11, 19, 11, "k", { flat: true }],
+      ["px", [[15, 14], [16, 14], [17, 14]], "d", { flat: true }],
+      ["px", [[7, 6], [25, 6], [5, 12], [27, 12]], "y", { flat: true }],
+    ],
+  },
+  warrior: {
+    headTop: 4,
+    shapes: [
+      ["line", 26, 3, 26, 21, "a"],
+      ["line", 27, 3, 27, 21, "a"],
+      ["rect", 24, 20, 5, 2, "y"],
+      ["rect", 12, 25, 3, 6, "m"],
+      ["rect", 17, 25, 3, 6, "m"],
+      ["poly", [[10, 15], [22, 15], [23, 25], [9, 25]], "b"],
+      ["rect", 9, 23, 14, 4, "B"],
+      ["rect", 9, 22, 14, 1, "y"],
+      ["ellipse", 23, 18, 2.5, 4, "s"],
+      ["ellipse", 7, 19, 5.5, 7, "B"],
+      ["ellipse", 7, 19, 3.5, 5, "M"],
+      ["px", [[7, 19]], "y", { flat: true }],
+      ["ellipse", 16, 10, 5.5, 5.5, "s"],
+      ["ellipse", 16, 7, 5.5, 3.5, "m"],
+      ["rect", 10, 8, 12, 2, "M"],
+      ["line", 16, 8, 16, 12, "M"],
+      ["px", [[14, 11], [18, 11]], "e", { flat: true }],
+    ],
+  },
+  knight: {
+    headTop: 5,
+    shapes: [
+      ["line", 26, 3, 26, 21, "a"],
+      ["line", 27, 3, 27, 21, "a"],
+      ["rect", 24, 20, 5, 2, "y"],
+      ["rect", 12, 25, 3, 6, "m"],
+      ["rect", 17, 25, 3, 6, "m"],
+      ["poly", [[10, 15], [22, 15], [23, 26], [9, 26]], "a"],
+      ["poly", [[12, 15], [20, 15], [20, 27], [12, 27]], "t"],
+      ["line", 16, 17, 16, 24, "y", { flat: true }],
+      ["line", 13, 19, 19, 19, "y", { flat: true }],
+      ["ellipse", 23, 16, 3, 3.5, "m"],
+      ["poly", [[2, 13], [12, 13], [11, 22], [7, 28], [3, 22]], "T"],
+      ["line", 7, 15, 7, 24, "y", { flat: true }],
+      ["line", 4, 18, 10, 18, "y", { flat: true }],
+      ["ellipse", 16, 10, 5.5, 5.5, "a"],
+      ["rect", 12, 10, 9, 2, "k", { flat: true }],
+      ["line", 16, 12, 16, 14, "m", { flat: true }],
+      ["poly", [[15, 5], [17, 0], [22, 2], [18, 6]], "p"],
+    ],
+  },
+};
+
+// Front view with gear on a 40x40 canvas (used for portraits and previews)
+function heroSvg(cls, gear = {}, label = "Your hero") {
+  const size = 40;
+  const ox = 4;
+  const oy = 5;
+  const art = HERO_FRONT_ART[baseClass(cls)];
+  let rects = "";
+  const aura = gearById(gear.aura);
+  if (aura) rects += auraRects(aura, size, 20, 21);
+
+  const shapes = [];
+  // A cape shows behind the shoulders and at the sides
+  const cape = gearById(gear.back);
+  if (cape) {
+    shapes.push(["poly", [[9, 14], [23, 14], [27, 31], [5, 31]], cape.colors.c]);
+    shapes.push(["rect", 5, 30, 22, 2, cape.colors.h]);
+  }
+  shapes.push(...art.shapes);
+  const head = gearById(gear.head);
+  if (head) shapes.push(...headGearShapes(head, art.headTop));
+  rects += gridToRects(rasterize(shapes, spriteColors(cls), ART_SIZE), ART_SIZE, ox, oy);
+
+  const pet = gearById(gear.pet);
+  if (pet) rects += petRects(pet.id, 28, 28);
+  // Without an aura or pet, crop the empty margin so the hero fills the frame
+  const viewBox = aura || pet ? `0 0 ${size} ${size}` : "3 3 34 34";
+  return `<svg class="sprite art" viewBox="${viewBox}" role="img" aria-label="${label}">${rects}</svg>`;
+}
+
+// A class's look without gear (class picker, welcome popup)
+function spriteSvg(cls, label) {
+  return heroSvg(cls, {}, label);
+}
+
 // The hero's back view with equipped gear, on a 40x40 canvas
 function heroBackArt(cls, gear = {}) {
   const size = 40;
   const ox = 4;
   const oy = 6;
-  const palette = spriteColors(cls);
   let rects = "";
-
   const aura = gearById(gear.aura);
-  if (aura) {
-    for (let y = 0; y < size; y++) {
-      for (let x = 0; x < size; x++) {
-        const d = Math.hypot(x - 20, y - 22);
-        const tone = d < 9 ? 2 : d < 13 ? 1 : d < 17 ? 0 : -1;
-        if (tone >= 0) rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${aura.tones[tone]}" opacity="0.55"/>`;
-      }
-    }
-  }
+  if (aura) rects += auraRects(aura, size, 20, 22);
 
   const shapes = [...HERO_BACK_ART[baseClass(cls)]];
   // From behind, a cape hangs over the back
@@ -483,21 +711,11 @@ function heroBackArt(cls, gear = {}) {
     shapes.push(["poly", [[10, 13], [22, 13], [25, 30], [7, 30]], cape.colors.c]);
     shapes.push(["rect", 7, 29, 18, 2, cape.colors.h]);
   }
-  const grid = rasterize(shapes, palette, ART_SIZE);
-  rects += gridToRects(grid, ART_SIZE, ox, oy);
-
   const head = gearById(gear.head);
-  if (head) rects += pixels(head.art, head.colors, ox + 13, oy + 1);
+  if (head) shapes.push(...headGearShapes(head, 4));
+  rects += gridToRects(rasterize(shapes, spriteColors(cls), ART_SIZE), ART_SIZE, ox, oy);
 
-  // Pets sit beside the hero, drawn at double size
   const pet = gearById(gear.pet);
-  if (pet) {
-    pet.art.forEach((row, y) => {
-      [...row].forEach((ch, x) => {
-        if (ch === "." || !pet.colors[ch]) return;
-        rects += `<rect x="${29 + x * 2}" y="${31 + y * 2}" width="2" height="2" fill="${pet.colors[ch]}"/>`;
-      });
-    });
-  }
+  if (pet) rects += petRects(pet.id, 27, 27);
   return `<svg class="sprite art" viewBox="0 0 ${size} ${size}" role="img" aria-label="Your hero">${rects}</svg>`;
 }

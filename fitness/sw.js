@@ -1,11 +1,11 @@
 // Bump this version whenever app files change so users get the update
-const CACHE = "fitquest-v11";
+const CACHE = "fitquest-v12";
 const ASSETS = [
   "./",
   "index.html",
   "app.css",
   "app.js",
-  "battle-art.js",
+  "art.js",
   "battle.js",
   "manifest.json",
   "fonts/press-start-2p.woff2",

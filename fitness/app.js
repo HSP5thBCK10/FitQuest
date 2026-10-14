@@ -205,100 +205,7 @@ function evenBonus(cls) {
   return Object.keys(STATS).every((stat) => b[stat] === b.STR);
 }
 
-// 16x16 pixel-art sprites. Each letter maps to a color in SPRITE_COLORS.
-const SPRITES = {
-  barbarian: [
-    ".w............w.",
-    ".ww...mmmm...ww.",
-    "..ww.mmmmmm.ww..",
-    "...wwmmmmmmww...",
-    ".....ssssss.....",
-    ".....sesses.....",
-    ".....hhsshh.....",
-    ".....hhhhhh.....",
-    "..ssshhhhhhsss..",
-    ".ssssshhhhsssss.",
-    ".ssd.ssssss.dss.",
-    ".ss..sdssds..ss.",
-    ".dd..bbbbbb..dd.",
-    ".....ffffff.....",
-    ".....ss..ss.....",
-    "....ddd..ddd....",
-  ],
-  assassin: [
-    "......cccc......",
-    ".....cCCCCc.....",
-    "....cCkkkkCc....",
-    "....cCgkkgCc....",
-    "....cCkkkkCc....",
-    ".....cCCCCc.....",
-    "....cccCCccc....",
-    "...ccCcCCcCcc...",
-    "...cc.cCCc.cc...",
-    "...ss.cCCc.ss...",
-    "...a..bbbb..a...",
-    "...a..cCCc..a...",
-    "......cccc......",
-    "......c..c......",
-    "......c..c......",
-    ".....kk..kk.....",
-  ],
-  monk: [
-    "....y......y....",
-    "...y..ssss..y...",
-    ".....ssssss.....",
-    ".....skssks.....",
-    ".....ssssss.....",
-    "......sdds......",
-    "....OooooooO....",
-    "...OooossoooO...",
-    "..OooooooooooO..",
-    "..OooorrrroooO..",
-    ".OooooooooooooO.",
-    "OOooooooooooooOO",
-    "OssOOOOOOOOOOssO",
-    ".OOOOOOOOOOOOOO.",
-    "................",
-    "................",
-  ],
-  warrior: [
-    "......mmmm....a.",
-    ".....mmmmmm...a.",
-    ".....MmmmmM...a.",
-    ".....sesses...a.",
-    ".....ssssss...a.",
-    "......ssss....a.",
-    "....mmbbbbmm..a.",
-    "BBB.mmbbbbmm.yyy",
-    "ByBsmbbbbbbmsss.",
-    "BBB.bbyyyybb....",
-    "BBB.BBBBBBBB....",
-    ".B..BBB..BBB....",
-    "....mm....mm....",
-    "....mm....mm....",
-    "...MMM....MMM...",
-    "................",
-  ],
-  knight: [
-    "......pp......a.",
-    ".....ppp......a.",
-    ".....aaaaaa...a.",
-    ".....akkkka...a.",
-    ".....amaama...a.",
-    "......aaaa....a.",
-    "....mattttam..a.",
-    "TTT.matyytam.yyy",
-    "TyT.mattttam.mb.",
-    "yyy.aayyyyaa....",
-    "TyT.tttttttt....",
-    ".T..ttt..ttt....",
-    "....mm....mm....",
-    "....mm....mm....",
-    "...aaa....aaa...",
-    "................",
-  ],
-};
-
+// Palette letters used by the hero art (see art.js)
 const SPRITE_COLORS = {
   // shared
   s: "#e8b07c", d: "#b97a4a", e: "#111827", k: "#111827",
@@ -315,18 +222,6 @@ const SPRITE_COLORS = {
   p: "#c084fc", t: "#7e22ce", T: "#581c87",
 };
 
-// Turns rows of letters into SVG pixels, offset by (dx, dy)
-function pixels(rows, colors, dx = 0, dy = 0) {
-  let rects = "";
-  rows.forEach((row, y) => {
-    [...row].forEach((ch, x) => {
-      if (ch === "." || !colors[ch]) return;
-      rects += `<rect x="${x + dx}" y="${y + dy}" width="1" height="1" fill="${colors[ch]}"/>`;
-    });
-  });
-  return rects;
-}
-
 // Per-class recolors of the base sprites (promoted classes get finer armor)
 const SPRITE_RECOLORS = {
   warrior: { b: "#3b82f6" }, // blue tunic rather than brown leather
@@ -341,33 +236,19 @@ function spriteColors(cls) {
   return { ...SPRITE_COLORS, ...(SPRITE_RECOLORS[cls] || {}) };
 }
 
-function spriteSvg(cls, label) {
-  const rects = pixels(SPRITES[baseClass(cls)], spriteColors(cls));
-  return `<svg class="sprite" viewBox="0 0 16 16" role="img" aria-label="${label}">${rects}</svg>`;
-}
-
 // ---------- Gear ----------
-
-// Where gear attaches on each class sprite (in sprite coordinates)
-const ANCHORS = {
-  barbarian: { headTop: 1, shoulders: 8 },
-  assassin: { headTop: 0, shoulders: 6 },
-  monk: { headTop: 1, shoulders: 6 },
-  warrior: { headTop: 0, shoulders: 6 },
-  knight: { headTop: 2, shoulders: 6 },
-};
 
 // Unlock rules: { level }, { badge } or { dungeon }. xp = permanent % bonus on new workouts.
 const GEAR = [
   // Head: drawn on top of the head
   { id: "leaf_circlet", slot: "head", name: "Leaf Circlet", unlock: { level: 3 },
-    art: [".g..g.", "gGgGgG"], colors: { g: "#4ade80", G: "#15803d" } },
+    colors: { g: "#4ade80", G: "#15803d" } },
   { id: "iron_crown", slot: "head", name: "Iron Crown", unlock: { level: 6 },
-    art: ["m.mm.m", "mmmmmm"], colors: { m: "#cbd5e1" } },
+    colors: { m: "#cbd5e1" } },
   { id: "gold_crown", slot: "head", name: "Golden Crown", unlock: { level: 12 }, xp: 5,
-    art: ["y.yy.y", "yryyry"], colors: { y: "#facc15", r: "#dc2626" } },
+    colors: { y: "#facc15", r: "#dc2626" } },
   { id: "halo", slot: "head", name: "Halo of Quests", unlock: { badge: "quests25" },
-    art: [".yyyy.", "y....y"], colors: { y: "#fef08a" } },
+    colors: { y: "#fef08a" } },
 
   // Back: a cape drawn behind the hero
   { id: "travel_cloak", slot: "back", name: "Traveler's Cloak", unlock: { level: 2 },
@@ -381,13 +262,13 @@ const GEAR = [
 
   // Companion: a pet at the hero's feet
   { id: "slime", slot: "pet", name: "Slime", unlock: { level: 4 },
-    art: [".ggg.", "ggggg", "gkgkg", "ggggg"], colors: { g: "#4ade80", k: "#052e16" } },
+    colors: { g: "#4ade80", k: "#052e16" } },
   { id: "cat", slot: "pet", name: "Tabby Cat", unlock: { badge: "streak3" },
-    art: ["o...o", "ooooo", "okoko", "ooooo"], colors: { o: "#fb923c", k: "#111827" } },
+    colors: { o: "#fb923c", k: "#111827" } },
   { id: "owl", slot: "pet", name: "Wise Owl", unlock: { badge: "trained10" },
-    art: [".bbb.", "bwbwb", "bbybb", ".b.b."], colors: { b: "#a16207", w: "#fef9c3", y: "#f97316" } },
+    colors: { b: "#a16207", w: "#fef9c3", y: "#f97316" } },
   { id: "dragon", slot: "pet", name: "Baby Dragon", unlock: { level: 15 }, xp: 5,
-    art: ["r.r..", "rrrr.", "ykrrr", ".r.rr"], colors: { r: "#dc2626", k: "#111827", y: "#facc15" } },
+    colors: { r: "#dc2626", k: "#111827", y: "#facc15" } },
 
   // Aura: a pixel glow behind the hero
   { id: "ember_aura", slot: "aura", name: "Ember Aura", unlock: { level: 7 },
@@ -401,15 +282,15 @@ const GEAR = [
 
   // Dungeon boss loot
   { id: "goblin_crown", slot: "head", name: "Goblin Crown", unlock: { dungeon: "cave" },
-    art: ["g.gg.g", "gyggyg"], colors: { g: "#65a30d", y: "#facc15" } },
+    colors: { g: "#65a30d", y: "#facc15" } },
   { id: "bone_cloak", slot: "back", name: "Bone Cloak", unlock: { dungeon: "crypt" },
     colors: { c: "#d6d3d1", h: "#57534e" } },
   { id: "sprout", slot: "pet", name: "Treant Sprout", unlock: { dungeon: "forest" },
-    art: [".g.g.", "ggggg", "bkbkb", ".b.b."], colors: { g: "#22c55e", b: "#92400e", k: "#111827" } },
+    colors: { g: "#22c55e", b: "#92400e", k: "#111827" } },
   { id: "magma_aura", slot: "aura", name: "Magma Aura", unlock: { dungeon: "volcano" },
     tones: ["#450a0a", "#b91c1c", "#fbbf24"] },
   { id: "dragon_helm", slot: "head", name: "Dragonslayer Helm", unlock: { dungeon: "peak" }, xp: 5,
-    art: ["r.yy.r", "rryyrr"], colors: { r: "#b91c1c", y: "#facc15" } },
+    colors: { r: "#b91c1c", y: "#facc15" } },
 ];
 
 const SLOTS = {
@@ -420,47 +301,6 @@ const SLOTS = {
 };
 
 const gearById = (id) => GEAR.find((g) => g.id === id);
-
-// Hero sprite on a 20x20 canvas with room around it for gear
-function heroSvg(cls, gear = {}, label = "Your hero") {
-  const OX = 2;
-  const OY = 2;
-  const anchor = ANCHORS[baseClass(cls)];
-  let rects = "";
-
-  const aura = gearById(gear.aura);
-  if (aura) {
-    for (let y = 0; y < 20; y++) {
-      for (let x = 0; x < 20; x++) {
-        const d = Math.hypot(x - 9.5, y - 10);
-        const tone = d < 5 ? 2 : d < 7.5 ? 1 : d < 10 ? 0 : -1;
-        if (tone >= 0) rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${aura.tones[tone]}"/>`;
-      }
-    }
-  }
-
-  const cape = gearById(gear.back);
-  if (cape) {
-    const top = anchor.shoulders + OY;
-    for (let y = top; y < 20; y++) {
-      const flare = Math.min(Math.floor((y - top) / 3), 2);
-      for (let x = 6 - flare; x <= 13 + flare; x++) {
-        const color = y >= 18 ? cape.colors.h : cape.colors.c;
-        rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${color}"/>`;
-      }
-    }
-  }
-
-  rects += pixels(SPRITES[baseClass(cls)], spriteColors(cls), OX, OY);
-
-  const head = gearById(gear.head);
-  if (head) rects += pixels(head.art, head.colors, 7, anchor.headTop + OY - 2);
-
-  const pet = gearById(gear.pet);
-  if (pet) rects += pixels(pet.art, pet.colors, 15, 16);
-
-  return `<svg class="sprite" viewBox="0 0 20 20" role="img" aria-label="${label}">${rects}</svg>`;
-}
 
 // ---------- Badges ----------
 
