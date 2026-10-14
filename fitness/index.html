@@ -240,6 +240,7 @@
         <h2 class="pixel">Your Hero</h2>
         <div class="current-class" id="current-class"></div>
         <button type="button" class="btn secondary pixel" id="change-class-btn">Change Class</button>
+        <button type="button" class="btn secondary pixel" id="replay-tutorial-btn">Replay Tutorial</button>
       </div>
 
       <form id="settings-form" class="panel form">
@@ -334,6 +335,20 @@
       <div class="popup-title pixel" id="popup-title"></div>
       <div class="popup-text" id="popup-text"></div>
       <button type="button" class="btn pixel" id="popup-btn">Onward!</button>
+    </div>
+  </div>
+
+  <!-- First-time tutorial -->
+  <div class="tutorial" id="tutorial" hidden>
+    <div class="tut-spotlight" id="tut-spotlight"></div>
+    <div class="tut-card panel" id="tut-card" role="dialog" aria-labelledby="tut-title">
+      <div class="tut-step pixel" id="tut-step"></div>
+      <div class="tut-title pixel" id="tut-title"></div>
+      <p class="tut-text" id="tut-text"></p>
+      <div class="tut-actions">
+        <button type="button" class="btn secondary pixel" id="tut-skip">Skip</button>
+        <button type="button" class="btn pixel" id="tut-next">Next</button>
+      </div>
     </div>
   </div>
 

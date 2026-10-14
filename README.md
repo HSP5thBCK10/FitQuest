@@ -44,7 +44,9 @@ can be installed to the home screen like a normal app, and works offline.
 
 ## Classes
 
-On first launch you choose a class (you can change it later in **Camp**):
+On first launch you choose a class (you can change it later in **Camp**), then a short
+5-step tour points out your hero, quests, Train, Fight and the other tabs. You can skip it,
+and replay it any time from **Camp**.
 
 | Class         | Body type              | Focus                                  | Bonus                 |
 | ------------- | ---------------------- | -------------------------------------- | --------------------- |
@@ -236,5 +238,5 @@ The app must be served over HTTPS to install. The easiest free option is GitHub 
 | `manifest.json`    | Makes the app installable                   |
 | `icons/`, `fonts/` | App icons and the Press Start 2P pixel font (OFL) |
 
-When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v15`) so installed
+When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v16`) so installed
 copies pick up the update.

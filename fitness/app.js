@@ -1466,10 +1466,18 @@ function popup(icon, title, text) {
   if ($("popup").hidden) showNextPopup();
 }
 
+// Runs once the popup queue is empty (e.g. start the tutorial after the welcome)
+let afterPopups = null;
+
 function showNextPopup() {
   const next = popupQueue.shift();
   if (!next) {
     $("popup").hidden = true;
+    if (afterPopups) {
+      const fn = afterPopups;
+      afterPopups = null;
+      fn();
+    }
     return;
   }
   $("popup-icon").innerHTML = next.icon;
@@ -1480,6 +1488,96 @@ function showNextPopup() {
 }
 
 $("popup-btn").addEventListener("click", showNextPopup);
+
+// ---------- Tutorial ----------
+// A short spotlight tour shown once after creating a hero (replayable in Camp).
+
+const TUTORIAL = [
+  {
+    target: ".hero-card",
+    title: "Your Hero",
+    text: "Every real workout you log earns XP. Level up to grow stronger, earn titles and unlock class promotions.",
+  },
+  {
+    target: "#quest-card",
+    title: "Quests",
+    text: "A new quest arrives each day and a bounty each week. Complete them for bonus XP and gold.",
+  },
+  {
+    target: '.tab[data-screen="train"]',
+    title: "Train",
+    text: "After you exercise, log it here. Activities marked with an XP badge match your class. Challenge mode records personal bests that teach you combat skills.",
+  },
+  {
+    target: '.tab[data-screen="fight"]',
+    title: "Fight",
+    text: "Take your hero into dungeons and battle monsters. Your power comes from real training: the fitter you get, the further you go.",
+  },
+  {
+    target: ".tab-bar",
+    title: "And More",
+    text: "Collect badges and gear in Loot, see your history in Journal, and change settings in Camp. Now go log your first workout!",
+  },
+];
+
+let tutorialStep = -1;
+
+function startTutorial() {
+  showScreen("hero");
+  tutorialStep = 0;
+  $("tutorial").hidden = false;
+  showTutorialStep();
+}
+
+function endTutorial(goTrain) {
+  tutorialStep = -1;
+  $("tutorial").hidden = true;
+  settings.tutorialDone = true;
+  save(SETTINGS_KEY, settings);
+  if (goTrain) showScreen("train");
+}
+
+function showTutorialStep() {
+  const step = TUTORIAL[tutorialStep];
+  const last = tutorialStep === TUTORIAL.length - 1;
+  $("tut-step").textContent = `${tutorialStep + 1} / ${TUTORIAL.length}`;
+  $("tut-title").textContent = step.title;
+  $("tut-text").textContent = step.text;
+  $("tut-next").textContent = last ? "Let's go!" : "Next";
+  $("tut-skip").hidden = last;
+  const el = document.querySelector(step.target);
+  if (getComputedStyle(el).position !== "fixed") el.scrollIntoView({ block: "center" });
+  requestAnimationFrame(placeTutorial);
+  $("tut-next").focus();
+}
+
+// Puts the spotlight on the target and the card above or below it
+function placeTutorial() {
+  if (tutorialStep < 0) return;
+  const r = document.querySelector(TUTORIAL[tutorialStep].target).getBoundingClientRect();
+  const pad = 6;
+  const spot = $("tut-spotlight");
+  spot.style.top = `${r.top - pad}px`;
+  spot.style.left = `${r.left - pad}px`;
+  spot.style.width = `${r.width + pad * 2}px`;
+  spot.style.height = `${r.height + pad * 2}px`;
+  const card = $("tut-card");
+  const below = r.top + r.height / 2 < window.innerHeight / 2;
+  card.style.top = below ? `${Math.min(r.bottom + pad + 12, window.innerHeight - card.offsetHeight - 12)}px` : "auto";
+  card.style.bottom = below ? "auto" : `${window.innerHeight - r.top + pad + 12}px`;
+}
+
+$("tut-next").addEventListener("click", () => {
+  if (tutorialStep === TUTORIAL.length - 1) return endTutorial(true);
+  tutorialStep++;
+  showTutorialStep();
+});
+$("tut-skip").addEventListener("click", () => endTutorial(false));
+$("replay-tutorial-btn").addEventListener("click", startTutorial);
+window.addEventListener("resize", placeTutorial);
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && tutorialStep >= 0) endTutorial(false);
+});
 
 // ---------- Navigation ----------
 
@@ -1566,6 +1664,7 @@ $("begin-btn").addEventListener("click", () => {
       `Welcome, ${settings.heroName || "Hero"}!`,
       `Your journey as a ${c.name} begins. ${c.bonusText}. Complete your daily quest to level up faster.`
     );
+    if (!settings.tutorialDone) afterPopups = startTutorial;
   } else if (changed) {
     toast(`You are now a ${c.name}!`);
   }
