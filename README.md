@@ -156,6 +156,12 @@ appeared!", "A critical hit!"), and you choose **FIGHT** (Strike or one of your 
 moves, which cost energy), **BAG** (Potions, 2 per run), **GUARD** or **RUN**. Tap the
 message box to speed through text.
 
+On phones that support it, attacks vibrate: a short tap when you land a hit, a double pulse
+for a critical hit, a heavier buzz when you take damage (strongest for boss smashes), and a
+pattern when a monster or your hero faints. You can turn this off in **Camp** ("Vibrate on
+hits in battle"). Web vibration works in Android browsers. iPhone Safari doesn't support
+it, so iPhones stay silent.
+
 - **Your battle stats come from real training.** HP, power, armor, crit and dodge are
   based on your level and attributes, so you can't grind your way through: you get
   stronger by working out.
@@ -238,5 +244,5 @@ The app must be served over HTTPS to install. The easiest free option is GitHub 
 | `manifest.json`    | Makes the app installable                   |
 | `icons/`, `fonts/` | App icons and the Press Start 2P pixel font (OFL) |
 
-When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v16`) so installed
+When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v17`) so installed
 copies pick up the update.

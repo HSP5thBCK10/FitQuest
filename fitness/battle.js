@@ -595,7 +595,7 @@ function enemyStrike(mult, announce = true) {
   const blocked = 1 - Math.min(buffTotal("block"), 0.85);
   const dmg = Math.max(1, Math.round(mitigate(raw, battle.stats.def * (1 + buffTotal("def"))) * blocked * rand(0.9, 1.1)));
   battle.hp = Math.max(0, battle.hp - dmg);
-  floatText("hero", String(dmg), "hurt");
+  floatText("hero", String(dmg), mult > 1 ? "hurt heavy" : "hurt");
   if (blocked < 1) addLog("The guard softened the blow!");
 
   if (e.ability === "drain") {
@@ -869,6 +869,32 @@ function restartAnimation(el, cls) {
   el.classList.add(cls);
 }
 
+// ---------- Vibration ----------
+// Haptic feedback on hits (Android browsers; iPhones don't support it).
+// Patterns are in milliseconds: vibrate, pause, vibrate...
+
+const VIBRATIONS = {
+  hit: 30,
+  crit: [40, 40, 70],
+  hurt: 80,
+  heavy: [70, 40, 160],
+  dot: 20,
+  enemyFaint: [50, 40, 50],
+  heroFaint: [150, 60, 300],
+};
+
+function buzz(kind) {
+  if (settings.vibration === false || !navigator.vibrate) return;
+  navigator.vibrate(VIBRATIONS[kind]);
+}
+
+function vibrationFor(ev) {
+  if (ev.cls === "heal" || ev.text === "MISS" || ev.text === "DODGE") return null;
+  if (ev.cls === "dot") return "dot";
+  if (ev.target === "hero") return ev.cls.includes("heavy") ? "heavy" : "hurt";
+  return ev.cls === "crit" ? "crit" : "hit";
+}
+
 async function playHit(ev) {
   const target = $(ev.target === "enemy" ? "b-enemy-sprite" : "b-hero-sprite");
   const attacker = $(ev.target === "enemy" ? "b-hero-sprite" : "b-enemy-sprite");
@@ -883,6 +909,8 @@ async function playHit(ev) {
   target.appendChild(floater);
   setTimeout(() => floater.remove(), 1000);
   if (ev.cls !== "heal" && ev.text !== "MISS" && ev.text !== "DODGE") restartAnimation(target, "hit");
+  const vibration = vibrationFor(ev);
+  if (vibration) buzz(vibration);
   battle.shown = { hp: ev.hp, enemyHp: ev.enemyHp };
   updateBars();
   await wait(480);
@@ -890,6 +918,7 @@ async function playHit(ev) {
 
 async function playFaint(side) {
   restartAnimation($(side === "enemy" ? "b-enemy-sprite" : "b-hero-sprite"), "fainted");
+  buzz(side === "enemy" ? "enemyFaint" : "heroFaint");
   await wait(600);
 }
 

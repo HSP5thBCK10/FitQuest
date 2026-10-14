@@ -1989,6 +1989,14 @@ document.addEventListener("click", (event) => {
 const settingsForm = $("settings-form");
 settingsForm.goal.value = settings.goal;
 settingsForm.units.value = settings.units;
+settingsForm.vibration.checked = settings.vibration !== false;
+
+// Saved right away, like the units setting
+settingsForm.vibration.addEventListener("change", () => {
+  settings.vibration = settingsForm.vibration.checked;
+  save(SETTINGS_KEY, settings);
+  if (settings.vibration && navigator.vibrate) navigator.vibrate(30);
+});
 
 function showWeightSetting() {
   $("weight-label").textContent = `Body weight (${settings.units})`;
