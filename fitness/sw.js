@@ -1,5 +1,5 @@
 // Bump this version whenever app files change so users get the update
-const CACHE = "fitquest-v9";
+const CACHE = "fitquest-v10";
 const ASSETS = [
   "./",
   "index.html",

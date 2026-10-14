@@ -8,15 +8,6 @@
 //   armored: double armor
 //   evasive: 20% chance to dodge each of your hits
 //   poison / burn: 35% chance per hit to deal damage over 3 turns
-const ABILITIES = {
-  enrage: "Enrages when wounded",
-  drain: "Drains your life",
-  armored: "Thick armor",
-  evasive: "Hard to hit",
-  poison: "Venomous",
-  burn: "Burns with fire",
-};
-
 const MONSTERS = {
   rat: { name: "Giant Rat", icon: "🐀" },
   goblin: { name: "Goblin", icon: "👺", ability: "enrage" },
@@ -158,7 +149,6 @@ const FLOOR_LEVELS = [0, 0, 1];
 const DUNGEONS_KEY = "fittrack.dungeons";
 const MAX_ENERGY = 100;
 const POTIONS_PER_RUN = 2;
-const TURN_DELAY = 650;
 
 // ---------- Progress ----------
 
@@ -265,6 +255,9 @@ function makeMonster(id, level) {
 }
 
 // ---------- Battle engine ----------
+// The engine resolves each turn instantly and queues what happened as events
+// (messages, hits, heals). The battle screen then plays them back one at a
+// time, Pokémon style: a message types out, the hit lands, the HP bar drains.
 
 let battle = null;
 
@@ -285,9 +278,25 @@ function buffTotal(key) {
   return battle.buffs.reduce((total, b) => total + (b[key] || 0), 0);
 }
 
+function heroName() {
+  return settings.heroName || "Hero";
+}
+
+// How monsters are named in messages: "Wild Goblin" or just the boss's name
+function foe(e = battle.enemy) {
+  return e.boss ? e.name : `Wild ${e.name}`;
+}
+
+// Queues a battle message
 function addLog(text) {
   battle.log.push(text);
   if (battle.log.length > 5) battle.log.shift();
+  battle.events.push({ type: "msg", text });
+}
+
+// Queues a hit, heal or miss on one side, with both HP values at that moment
+function floatText(target, text, cls = "") {
+  battle.events.push({ type: "fx", target, text, cls, hp: battle.hp, enemyHp: battle.enemy.hp });
 }
 
 function heal(pct) {
@@ -314,15 +323,33 @@ function startDungeon(index) {
     dot: null,
     potions: stats.potions,
     log: [],
-    busy: false,
+    events: [],
+    busy: true,
     over: false,
+    menu: "wait",
+    shown: { hp: stats.maxHp, enemyHp: 0 },
   };
   battle.enemy = monsterOnFloor(dungeon, 0);
-  addLog(`You enter ${dungeon.name}...`);
-  addLog(`A ${battle.enemy.name} appears!`);
   $("b-hero-sprite").innerHTML = heroSvg(settings.cls, settings.gear, "Your hero");
+  $("b-scene").className = `scene ${dungeon.id}`;
   $("b-enemy-sprite").dataset.monster = "";
   $("battle").hidden = false;
+  enterEnemy();
+  beginTurn();
+}
+
+// Queues the next monster's entrance and warning
+function enterEnemy() {
+  const e = battle.enemy;
+  battle.events.push({ type: "enter" });
+  addLog(e.boss ? `The boss ${e.name} appeared!` : `A wild ${e.name} appeared!`);
+  if (e.ability) addLog(ABILITY_WARNINGS[e.ability]);
+}
+
+async function beginTurn() {
+  if (!(await present())) return;
+  battle.busy = false;
+  battle.menu = "main";
   renderBattle();
 }
 
@@ -330,6 +357,7 @@ function heroStrike(mult, opts = {}) {
   const e = battle.enemy;
   let total = 0;
   let crits = 0;
+  let landed = 0;
   for (let i = 0; i < (opts.hits || 1) && e.hp > 0; i++) {
     if (e.ability === "evasive" && Math.random() < 0.2) {
       floatText("enemy", "MISS");
@@ -342,54 +370,58 @@ function heroStrike(mult, opts = {}) {
     const dmg = Math.max(1, Math.round(mitigate(raw, opts.pierce ? 0 : e.def) * rand(0.9, 1.1)));
     e.hp = Math.max(0, e.hp - dmg);
     total += dmg;
+    landed++;
     if (crit) crits++;
     floatText("enemy", crit ? `${dmg}!` : String(dmg), crit ? "crit" : "");
   }
   if (battle.stats.lifesteal && total) healAmount(total * battle.stats.lifesteal);
-  return { total, crits };
+  return { total, crits, landed, hits: opts.hits || 1 };
 }
 
-function strikeText({ total, crits }) {
-  if (!total) return "but it misses";
-  return `${total} damage${crits ? (crits > 1 ? ` (${crits} crits!)` : " (critical!)") : ""}`;
+// Follow-up messages after a strike, like "A critical hit!"
+function strikeMessages({ total, crits, landed, hits }) {
+  if (!total) return addLog(`${foe()} dodged the attack!`);
+  if (hits > 1) addLog(`Hit ${landed} time${landed > 1 ? "s" : ""}!`);
+  if (crits) addLog(crits > 1 ? `${crits} critical hits!` : "A critical hit!");
 }
 
 function useSkill(skill) {
   const power = skillPower(skill.rank);
   const fx = skill.effect;
   const e = battle.enemy;
-  const parts = [];
   battle.energy -= skill.cost;
+  addLog(`${heroName()} used ${skill.name}!`);
 
   if (fx.damage) {
-    parts.push(strikeText(heroStrike(fx.damage * power, fx)));
+    strikeMessages(heroStrike(fx.damage * power, fx));
     if (fx.recoil) {
       const recoil = Math.round(battle.stats.maxHp * fx.recoil);
       battle.hp = Math.max(1, battle.hp - recoil);
-      parts.push(`you take ${recoil} recoil`);
+      addLog(`${heroName()} is hurt by the recoil!`);
+      floatText("hero", String(recoil), "hurt");
     }
     if (fx.stun && e.hp > 0) {
       // Bosses resist stuns, and nothing can be stunned two turns in a row
       const chance = e.stunImmune ? 0 : (fx.stun + 0.1 * (skill.rank - 1)) * (e.boss ? 0.5 : 1);
       if (Math.random() < chance) {
         e.stun = true;
-        parts.push(`${e.name} is stunned`);
-      } else {
-        parts.push(e.stunImmune ? `${e.name} resists the stun` : "no stun");
+        addLog(`${foe()} is stunned!`);
+      } else if (e.stunImmune) {
+        addLog(`${foe()} resisted the stun!`);
       }
     }
     if (fx.poison && e.hp > 0) {
       e.dot = { dmg: Math.max(1, Math.round(battle.stats.pow * fx.poison.pct * power)), turns: fx.poison.turns, label: "Poison" };
-      parts.push("poisoned");
+      addLog(`${foe()} was poisoned!`);
     }
   }
   if (fx.heal) {
     const healed = heal(fx.heal * power);
-    parts.push(healed ? `healed ${healed} HP` : "already at full HP");
+    addLog(healed ? `${heroName()} recovered ${healed} HP!` : `${heroName()}'s HP is already full!`);
   }
   if (fx.cleanse && battle.dot) {
     battle.dot = null;
-    parts.push("cured");
+    addLog(`${heroName()} was cured!`);
   }
   if (fx.buff) {
     const b = { ...fx.buff, name: skill.name };
@@ -399,34 +431,34 @@ function useSkill(skill) {
     if (b.block) b.block = Math.min(b.block + 0.1 * (skill.rank - 1), 0.8);
     if (b.dodge) b.dodge += 10 * (skill.rank - 1);
     battle.buffs.push(b);
-    parts.push(buffSummary(b));
+    addLog(buffMessage(b));
   }
-  addLog(`${skill.icon} ${skill.name}: ${parts.join(", ")}.`);
 }
 
-function buffSummary(b) {
+function buffMessage(b) {
+  if (b.evade) return `${heroName()} melts into the shadows!`;
   const effects = [];
   if (b.atk) effects.push(`+${Math.round(b.atk * 100)}% damage`);
   if (b.def) effects.push(`+${Math.round(b.def * 100)}% armor`);
-  if (b.block) effects.push(`blocking ${Math.round(b.block * 100)}%`);
+  if (b.block) effects.push(`${Math.round(b.block * 100)}% damage reduction`);
   if (b.dodge) effects.push(`+${b.dodge}% dodge`);
-  if (b.regen) effects.push(`healing ${Math.round(b.regen * 100)}% per turn`);
-  if (b.evade) return "ready to dodge the next attack";
-  return `${effects.join(" and ")} for ${b.turns} turn${b.turns > 1 ? "s" : ""}`;
+  if (b.regen) effects.push(`${Math.round(b.regen * 100)}% healing per turn`);
+  return `${heroName()} gains ${effects.join(" and ")} for ${b.turns} turn${b.turns > 1 ? "s" : ""}!`;
 }
 
-function enemyStrike(mult) {
+function enemyStrike(mult, announce = true) {
   const e = battle.enemy;
+  if (announce) addLog(`${foe()} attacks!`);
   const evade = battle.buffs.find((b) => b.evade);
   if (evade) {
     battle.buffs = battle.buffs.filter((b) => b !== evade);
     floatText("hero", "DODGE");
-    addLog(`You slip into the shadows and dodge ${e.name}!`);
+    addLog(`${heroName()} slipped away untouched!`);
     return;
   }
   if (Math.random() * 100 < battle.stats.dodge + buffTotal("dodge")) {
     floatText("hero", "DODGE");
-    addLog(`You dodge ${e.name}'s attack!`);
+    addLog(`${heroName()} dodged the attack!`);
     return;
   }
   const raw = e.atk * mult * (e.enraged ? 1.5 : 1);
@@ -434,19 +466,20 @@ function enemyStrike(mult) {
   const dmg = Math.max(1, Math.round(mitigate(raw, battle.stats.def * (1 + buffTotal("def"))) * blocked * rand(0.9, 1.1)));
   battle.hp = Math.max(0, battle.hp - dmg);
   floatText("hero", String(dmg), "hurt");
-  addLog(`${e.name} hits you for ${dmg}${blocked < 1 ? " (blocked some)" : ""}.`);
+  if (blocked < 1) addLog("The guard softened the blow!");
 
   if (e.ability === "drain") {
     const healed = Math.min(Math.round(dmg * 0.5), e.maxHp - e.hp);
     if (healed > 0) {
       e.hp += healed;
-      addLog(`${e.name} drains ${healed} HP.`);
+      addLog(`${foe()} drained ${heroName()}'s health!`);
+      floatText("enemy", `+${healed}`, "heal");
     }
   }
   if ((e.ability === "poison" || e.ability === "burn") && !battle.dot && Math.random() < 0.35) {
     const label = e.ability === "burn" ? "Burn" : "Poison";
     battle.dot = { dmg: Math.max(1, Math.round(e.atk * 0.3)), turns: 3, label };
-    addLog(e.ability === "burn" ? "You are burning!" : "You are poisoned!");
+    addLog(e.ability === "burn" ? `${heroName()} was burned!` : `${heroName()} was poisoned!`);
   }
 }
 
@@ -455,8 +488,8 @@ function enemyTurn() {
   e.turn++;
   if (e.dot) {
     e.hp = Math.max(0, e.hp - e.dot.dmg);
+    addLog(`${foe()} is hurt by ${e.dot.label.toLowerCase()}!`);
     floatText("enemy", String(e.dot.dmg), "dot");
-    addLog(`${e.name} takes ${e.dot.dmg} ${e.dot.label.toLowerCase()} damage.`);
     e.dot.turns--;
     if (!e.dot.turns) e.dot = null;
     if (e.hp <= 0) return;
@@ -465,25 +498,25 @@ function enemyTurn() {
     e.stun = false;
     e.stunImmune = true;
     e.windup = false;
-    addLog(`${e.name} is stunned and can't move!`);
+    addLog(`${foe()} is stunned and can't move!`);
     return;
   }
   e.stunImmune = false;
   if (e.ability === "enrage" && !e.enraged && e.hp / e.maxHp < 0.4) {
     e.enraged = true;
-    addLog(`${e.name} flies into a rage!`);
+    addLog(`${foe()} flies into a rage!`);
   }
-  // Bosses telegraph a heavy attack every third turn: a good time to defend
+  // Bosses telegraph a heavy attack every third turn: a good time to guard
   if (e.boss) {
     if (e.windup) {
       e.windup = false;
       addLog(`${e.name} unleashes a devastating attack!`);
-      enemyStrike(2.2);
+      enemyStrike(2.2, false);
       return;
     }
     if (e.turn % 3 === 0) {
       e.windup = true;
-      addLog(`⚠️ ${e.name} is winding up a huge attack!`);
+      addLog(`${e.name} is gathering power! Time to GUARD!`);
       return;
     }
   }
@@ -493,8 +526,8 @@ function enemyTurn() {
 function endRound() {
   if (battle.dot) {
     battle.hp = Math.max(0, battle.hp - battle.dot.dmg);
+    addLog(`${heroName()} is hurt by ${battle.dot.label === "Burn" ? "the burn" : "poison"}!`);
     floatText("hero", String(battle.dot.dmg), "dot");
-    addLog(`You take ${battle.dot.dmg} ${battle.dot.label.toLowerCase()} damage.`);
     battle.dot.turns--;
     if (!battle.dot.turns) battle.dot = null;
   }
@@ -510,61 +543,56 @@ async function act(action) {
   if (skill && (skill.rank < 1 || battle.energy < skill.cost)) return;
   if (action === "potion" && battle.potions <= 0) return;
 
-  const current = battle;
   battle.busy = true;
   if (action === "attack") {
-    addLog(`You attack: ${strikeText(heroStrike(1))}.`);
+    addLog(`${heroName()} attacks!`);
+    strikeMessages(heroStrike(1));
     battle.energy += 10;
   } else if (action === "defend") {
     battle.buffs.push({ block: 0.5, turns: 1, name: "Guard" });
     battle.energy += 20;
-    addLog("You raise your guard.");
+    addLog(`${heroName()} takes a defensive stance!`);
   } else if (action === "potion") {
     battle.potions--;
-    addLog(`🧪 You drink a potion and heal ${heal(battle.stats.potionHeal)} HP.`);
+    addLog(`${heroName()} drank a potion!`);
+    const healed = heal(battle.stats.potionHeal);
+    addLog(healed ? `${heroName()} recovered ${healed} HP!` : `${heroName()}'s HP is already full!`);
   } else if (skill) {
     useSkill(skill);
   }
   battle.energy = Math.min(MAX_ENERGY, battle.energy);
-  renderBattle();
+  if (!(await present())) return; // fled mid-turn
   if (battle.enemy.hp <= 0) return enemyDefeated();
 
-  await wait(TURN_DELAY);
-  if (battle !== current) return; // fled mid-turn
   enemyTurn();
-  renderBattle();
+  if (!(await present())) return;
   if (battle.enemy.hp <= 0) return enemyDefeated();
   if (battle.hp <= 0) return defeat();
 
   endRound();
-  if (battle.hp <= 0) {
-    renderBattle();
-    return defeat();
-  }
+  if (!(await present())) return;
+  if (battle.hp <= 0) return defeat();
   battle.busy = false;
+  battle.menu = "main";
   renderBattle();
 }
 
 async function enemyDefeated() {
-  const e = battle.enemy;
-  addLog(`${e.icon} ${e.name} is defeated!`);
+  battle.events.push({ type: "faint", target: "enemy" });
+  addLog(`${foe()} fainted!`);
   dungeonProgress().kills++;
   saveDungeons();
-  renderBattle();
-  const current = battle;
-  await wait(900);
-  if (battle !== current) return;
+  if (!(await present())) return;
 
   if (battle.floor < battle.dungeon.floors.length - 1) {
     battle.floor++;
     battle.buffs = [];
     battle.dot = null;
     const healed = heal(0.3);
+    if (healed) addLog(`${heroName()} caught their breath and recovered ${healed} HP.`);
     battle.enemy = monsterOnFloor(battle.dungeon, battle.floor);
-    if (healed) addLog(`You catch your breath (+${healed} HP).`);
-    addLog(`${battle.enemy.boss ? "👑 BOSS: " : ""}${battle.enemy.name} appears!`);
-    battle.busy = false;
-    renderBattle();
+    enterEnemy();
+    beginTurn();
   } else {
     victory();
   }
@@ -590,7 +618,10 @@ function victory() {
   celebrate(level, unlocks);
 }
 
-function defeat() {
+async function defeat() {
+  battle.events.push({ type: "faint", target: "hero" });
+  addLog(`${heroName()} fainted...`);
+  if (!(await present())) return;
   battle.over = true;
   render();
   showBattleEnd(
@@ -600,35 +631,141 @@ function defeat() {
 }
 
 function fleeBattle() {
-  if (battle && !battle.over && !confirm("Flee the dungeon? Your progress in this run will be lost.")) return;
+  if (battle && !battle.over && !confirm("Run from the dungeon? Your progress in this run will be lost.")) return;
+  if (battle && battle.onTap) battle.onTap();
   battle = null;
   $("battle").hidden = true;
   renderFight();
 }
 
-// ---------- Battle UI ----------
+// ---------- Battle playback ----------
 
-function floatText(target, text, cls = "") {
-  const host = $(target === "enemy" ? "b-enemy-sprite" : "b-hero-sprite");
-  const el = document.createElement("span");
-  el.className = `floater pixel ${cls}`;
-  el.textContent = text;
-  host.appendChild(el);
-  setTimeout(() => el.remove(), 1000);
-  if (cls !== "heal") {
-    host.classList.remove("hit");
-    void host.offsetWidth; // restart the shake animation
-    host.classList.add("hit");
+const TYPE_SPEED = 18; // ms per letter
+const MESSAGE_HOLD = 650; // ms a finished message stays before moving on
+
+// Plays queued events in order. Returns false if the battle ended meanwhile
+// (the player ran away).
+async function present() {
+  const current = battle;
+  battle.menu = "wait";
+  renderBattle();
+  while (battle === current && battle.events.length) {
+    const ev = battle.events.shift();
+    if (ev.type === "msg") await typeMessage(ev.text);
+    else if (ev.type === "fx") await playHit(ev);
+    else if (ev.type === "faint") await playFaint(ev.target);
+    else if (ev.type === "enter") await playEnter();
   }
+  if (battle !== current) return false;
+  battle.shown = { hp: battle.hp, enemyHp: battle.enemy.hp };
+  updateBars();
+  return true;
 }
 
-function statusChips(list) {
-  return list.map(([icon, text]) => `<span class="chip">${icon} ${text}</span>`).join("");
+async function typeMessage(text) {
+  const box = $("b-text");
+  const current = battle;
+  battle.skipTyping = false;
+  for (let i = 1; i <= text.length; i++) {
+    if (battle !== current) return;
+    if (battle.skipTyping) i = text.length;
+    box.textContent = text.slice(0, i);
+    if (i < text.length) await wait(TYPE_SPEED);
+  }
+  await waitOrTap(MESSAGE_HOLD);
+}
+
+// Waits, but a tap on the text box moves on early
+function waitOrTap(ms) {
+  return new Promise((resolve) => {
+    const owner = battle;
+    const done = () => {
+      clearTimeout(timer);
+      if (owner) owner.onTap = null;
+      resolve();
+    };
+    const timer = setTimeout(done, ms * (window.battleSpeed ?? 1));
+    owner.onTap = done;
+  });
+}
+
+function restartAnimation(el, cls) {
+  el.classList.remove(cls);
+  void el.offsetWidth; // let the animation play again
+  el.classList.add(cls);
+}
+
+async function playHit(ev) {
+  const target = $(ev.target === "enemy" ? "b-enemy-sprite" : "b-hero-sprite");
+  const attacker = $(ev.target === "enemy" ? "b-hero-sprite" : "b-enemy-sprite");
+  const isAttack = ev.cls !== "heal" && ev.cls !== "dot";
+  if (isAttack) {
+    restartAnimation(attacker, ev.target === "enemy" ? "lunge-right" : "lunge-left");
+    await wait(160);
+  }
+  const floater = document.createElement("span");
+  floater.className = `floater pixel ${ev.cls}`;
+  floater.textContent = ev.text;
+  target.appendChild(floater);
+  setTimeout(() => floater.remove(), 1000);
+  if (ev.cls !== "heal" && ev.text !== "MISS" && ev.text !== "DODGE") restartAnimation(target, "hit");
+  battle.shown = { hp: ev.hp, enemyHp: ev.enemyHp };
+  updateBars();
+  await wait(480);
+}
+
+async function playFaint(side) {
+  restartAnimation($(side === "enemy" ? "b-enemy-sprite" : "b-hero-sprite"), "fainted");
+  await wait(600);
+}
+
+async function playEnter() {
+  battle.shownEnemy = battle.enemy;
+  battle.shown.enemyHp = battle.enemy.hp;
+  renderBattle();
+  const sprite = $("b-enemy-sprite");
+  sprite.classList.remove("fainted");
+  restartAnimation(sprite, "enter");
+  await wait(450);
+}
+
+// ---------- Battle UI ----------
+
+const ABILITY_WARNINGS = {
+  enrage: "It looks ready to snap when hurt!",
+  drain: "It hungers for your life force!",
+  armored: "Its thick armor shrugs off weak blows!",
+  evasive: "It moves too fast to see!",
+  poison: "Its fangs drip with venom!",
+  burn: "Heat radiates from its scales!",
+};
+
+function hpClass(pct) {
+  return pct > 0.5 ? "" : pct > 0.2 ? "mid" : "low";
+}
+
+function updateBars() {
+  const b = battle;
+  const e = b.shownEnemy || b.enemy;
+  const enemyPct = b.shown.enemyHp / e.maxHp;
+  const heroPct = b.shown.hp / b.stats.maxHp;
+  const enemyBar = $("b-enemy-hp");
+  enemyBar.style.width = `${enemyPct * 100}%`;
+  enemyBar.className = `hp-fill ${hpClass(enemyPct)}`;
+  const heroBar = $("b-hero-hp");
+  heroBar.style.width = `${heroPct * 100}%`;
+  heroBar.className = `hp-fill ${hpClass(heroPct)}`;
+  $("b-hero-hp-text").textContent = `${b.shown.hp} / ${b.stats.maxHp}`;
+  $("b-energy").style.width = `${b.energy}%`;
+}
+
+function chips(list) {
+  return list.map(([cls, text]) => `<span class="status-tag ${cls}">${text}</span>`).join("");
 }
 
 function renderBattle() {
   const b = battle;
-  const e = b.enemy;
+  const e = b.shownEnemy || b.enemy;
   $("b-dungeon").textContent = b.dungeon.name;
   $("b-floor").textContent = `Floor ${b.floor + 1}/${b.dungeon.floors.length}`;
 
@@ -637,79 +774,110 @@ function renderBattle() {
     enemySprite.dataset.monster = e.id;
     enemySprite.innerHTML = `<span class="monster-icon ${e.boss ? "boss" : ""}">${e.icon}</span>`;
   }
-  enemySprite.classList.toggle("defeated", e.hp <= 0);
-  $("b-enemy-name").textContent = `${e.boss ? "👑 " : ""}${e.name}`;
-  $("b-enemy-level").textContent = `LV ${e.level}`;
-  $("b-enemy-hp").style.width = `${(e.hp / e.maxHp) * 100}%`;
-  $("b-enemy-hp-text").textContent = `${e.hp} / ${e.maxHp}`;
+  $("b-enemy-name").textContent = `${e.boss ? "👑" : ""}${e.name}`;
+  $("b-enemy-level").textContent = `Lv${e.level}`;
   const enemyStatus = [];
-  if (e.ability) enemyStatus.push(["★", ABILITIES[e.ability]]);
-  if (e.windup) enemyStatus.push(["⚠️", "Winding up!"]);
-  if (e.stun) enemyStatus.push(["💫", "Stunned"]);
-  if (e.enraged) enemyStatus.push(["😡", "Enraged"]);
-  if (e.dot) enemyStatus.push(["🧪", `${e.dot.label} ${e.dot.turns}`]);
-  $("b-enemy-status").innerHTML = statusChips(enemyStatus);
+  if (e.windup) enemyStatus.push(["warn", "CHARGING"]);
+  if (e.stun) enemyStatus.push(["stn", "STN"]);
+  if (e.enraged) enemyStatus.push(["rage", "RAGE"]);
+  if (e.dot) enemyStatus.push(["psn", "PSN"]);
+  $("b-enemy-status").innerHTML = chips(enemyStatus);
 
-  $("b-hero-name").textContent = settings.heroName || "Hero";
-  $("b-hero-hp").style.width = `${(b.hp / b.stats.maxHp) * 100}%`;
-  $("b-hero-hp-text").textContent = `${b.hp} / ${b.stats.maxHp}`;
-  $("b-energy").style.width = `${b.energy}%`;
-  $("b-energy-text").textContent = `${b.energy} / ${MAX_ENERGY}`;
-  const heroStatus = b.buffs.map((x) => ["✦", `${x.name} ${x.turns}`]);
-  if (b.dot) heroStatus.push([b.dot.label === "Burn" ? "🔥" : "🧪", `${b.dot.label} ${b.dot.turns}`]);
-  $("b-hero-status").innerHTML = statusChips(heroStatus);
+  $("b-hero-name").textContent = heroName();
+  $("b-hero-level").textContent = `Lv${levelInfo(totalXp()).level}`;
+  const heroStatus = b.buffs.map((x) => ["buff", x.name.toUpperCase()]);
+  if (b.dot) heroStatus.push([b.dot.label === "Burn" ? "brn" : "psn", b.dot.label === "Burn" ? "BRN" : "PSN"]);
+  $("b-hero-status").innerHTML = chips(heroStatus);
+  updateBars();
+  renderCommand();
+}
 
-  $("b-log").innerHTML = b.log.map((line, i) => `<p class="${i === b.log.length - 1 ? "latest" : ""}">${line}</p>`).join("");
-
-  if (b.over) return;
-  const disabled = b.busy ? "disabled" : "";
-  const skills = combatSkills()
-    .map((s) => {
-      if (s.rank < 1) {
+// The bottom of the screen: messages, the FIGHT/BAG/GUARD/RUN menu, moves, bag
+function renderCommand() {
+  const b = battle;
+  const menu = $("b-actions");
+  $("b-command").dataset.menu = b.menu;
+  if (b.menu === "main") {
+    $("b-text").textContent = `What will ${heroName()} do?`;
+    menu.innerHTML = `
+      <button type="button" class="cmd selected pixel" data-menu="fight">Fight</button>
+      <button type="button" class="cmd pixel" data-menu="bag">Bag</button>
+      <button type="button" class="cmd pixel" data-action="defend">Guard</button>
+      <button type="button" class="cmd pixel" data-run>Run</button>`;
+  } else if (b.menu === "fight") {
+    // Like Pokémon, only show the moves you know
+    const skills = combatSkills();
+    const locked = skills.filter((s) => s.rank < 1).length;
+    const moves = skills
+      .filter((s) => s.rank > 0)
+      .map((s) => {
         return `
-          <button type="button" class="action skill locked" disabled>
-            <span class="action-name">🔒 ${s.name}</span>
-            <span class="action-sub">${s.ultimate ? "Class promotion" : `${CHALLENGES[s.challenge].name} rank I`}</span>
+          <button type="button" class="move ${s.ultimate ? "ultimate" : ""}" data-action="${s.id}" ${b.energy < s.cost ? "disabled" : ""}>
+            <span class="move-name">${s.icon} ${s.name}</span>
+            <span class="move-meta">EN ${s.cost} · Rank ${RANKS[s.rank - 1]}</span>
           </button>`;
-      }
-      const noEnergy = b.energy < s.cost;
-      return `
-        <button type="button" class="action skill ${s.ultimate ? "ultimate" : ""}" data-action="${s.id}" ${disabled || noEnergy ? "disabled" : ""}>
-          <span class="action-name">${s.icon} ${s.name}</span>
-          <span class="action-sub">${s.cost} EN · Rank ${RANKS[s.rank - 1]}</span>
-        </button>`;
-    })
-    .join("");
-  $("b-actions").innerHTML = `
-    <button type="button" class="action" data-action="attack" ${disabled}>
-      <span class="action-name">⚔️ Attack</span><span class="action-sub">+10 EN</span>
-    </button>
-    <button type="button" class="action" data-action="defend" ${disabled}>
-      <span class="action-name">🛡️ Defend</span><span class="action-sub">Block 50% · +20 EN</span>
-    </button>
-    <button type="button" class="action" data-action="potion" ${disabled || !b.potions ? "disabled" : ""}>
-      <span class="action-name">🧪 Potion</span><span class="action-sub">Heal ${Math.round(b.stats.potionHeal * 100)}% · ${b.potions} left</span>
-    </button>
-    ${skills}`;
+      })
+      .join("");
+    menu.innerHTML = `
+      <button type="button" class="move" data-action="attack">
+        <span class="move-name">⚔️ Strike</span><span class="move-meta">Free · +10 EN</span>
+      </button>
+      ${moves}
+      ${locked ? `<p class="move-note">🔒 ${locked} more move${locked > 1 ? "s" : ""} to learn in Train → Challenge</p>` : ""}
+      <div class="move-footer">
+        <span class="pixel">EN ${b.energy}/${MAX_ENERGY}</span>
+        <button type="button" class="cmd back pixel" data-menu="main">Back</button>
+      </div>`;
+  } else if (b.menu === "bag") {
+    menu.innerHTML = `
+      <button type="button" class="move" data-action="potion" ${b.potions ? "" : "disabled"}>
+        <span class="move-name">🧪 Potion ×${b.potions}</span>
+        <span class="move-meta">Restores ${Math.round(b.stats.potionHeal * 100)}% HP</span>
+      </button>
+      <div class="move-footer">
+        <span class="pixel">Bag</span>
+        <button type="button" class="cmd back pixel" data-menu="main">Back</button>
+      </div>`;
+  } else if (b.menu === "end") {
+    menu.innerHTML = `
+      <div class="battle-end">
+        <div class="popup-title pixel">${b.endTitle}</div>
+        <p class="end-text">${b.endText}</p>
+        <button type="button" class="btn pixel" id="b-return">Return to Town</button>
+      </div>`;
+  } else {
+    menu.innerHTML = "";
+  }
 }
 
 function showBattleEnd(title, text) {
+  battle.menu = "end";
+  battle.endTitle = title;
+  battle.endText = text;
   renderBattle();
-  $("b-actions").innerHTML = `
-    <div class="battle-end panel">
-      <div class="popup-title pixel">${title}</div>
-      <p class="popup-text">${text}</p>
-      <button type="button" class="btn pixel" id="b-return">Return to Town</button>
-    </div>`;
 }
 
 document.getElementById("b-actions").addEventListener("click", (event) => {
+  if (!battle) return;
   if (event.target.closest("#b-return")) return fleeBattle();
-  const btn = event.target.closest(".action[data-action]");
-  if (btn && !btn.disabled) act(btn.dataset.action);
+  const btn = event.target.closest("button");
+  if (!btn || btn.disabled || battle.busy) return;
+  if (btn.dataset.menu) {
+    battle.menu = btn.dataset.menu;
+    renderBattle();
+  } else if ("run" in btn.dataset) {
+    fleeBattle();
+  } else if (btn.dataset.action) {
+    act(btn.dataset.action);
+  }
 });
 
-document.getElementById("b-flee").addEventListener("click", fleeBattle);
+// Tapping the message box skips the typing, then moves to the next message
+document.getElementById("b-text").addEventListener("click", () => {
+  if (!battle) return;
+  if (battle.onTap) battle.onTap();
+  else battle.skipTyping = true;
+});
 
 // ---------- Fight screen ----------
 

@@ -281,41 +281,35 @@
     </div>
   </div>
 
-  <!-- Dungeon battle -->
+  <!-- Dungeon battle (Pokémon-style) -->
   <div class="overlay battle" id="battle" hidden>
     <div class="battle-inner">
-      <div class="battle-top pixel">
-        <span id="b-dungeon"></span>
-        <span id="b-floor"></span>
-        <button type="button" class="flee-btn pixel" id="b-flee">Flee</button>
-      </div>
+      <div class="battle-top pixel"><span id="b-dungeon"></span><span id="b-floor"></span></div>
 
-      <div class="arena">
-        <div class="combatant enemy">
-          <div class="combatant-info">
-            <div class="b-name pixel"><span id="b-enemy-name"></span><span class="b-level" id="b-enemy-level"></span></div>
-            <div class="bar hp-bar"><div class="bar-fill" id="b-enemy-hp"></div></div>
-            <div class="b-numbers" id="b-enemy-hp-text"></div>
-            <div class="b-status" id="b-enemy-status"></div>
-          </div>
-          <div class="b-sprite" id="b-enemy-sprite"></div>
+      <div class="scene" id="b-scene">
+        <div class="info-box enemy-box">
+          <div class="info-name pixel"><span id="b-enemy-name"></span><span id="b-enemy-level"></span></div>
+          <div class="hp-row"><span class="hp-tag pixel">HP</span><div class="hp-track"><div class="hp-fill" id="b-enemy-hp"></div></div></div>
+          <div class="status-row" id="b-enemy-status"></div>
         </div>
+        <div class="platform enemy-platform"></div>
+        <div class="b-sprite enemy-sprite" id="b-enemy-sprite"></div>
 
-        <div class="combatant hero">
-          <div class="b-sprite" id="b-hero-sprite"></div>
-          <div class="combatant-info">
-            <div class="b-name pixel" id="b-hero-name"></div>
-            <div class="bar hp-bar hero-hp"><div class="bar-fill" id="b-hero-hp"></div></div>
-            <div class="b-numbers">HP <span id="b-hero-hp-text"></span></div>
-            <div class="bar energy-bar"><div class="bar-fill" id="b-energy"></div></div>
-            <div class="b-numbers">EN <span id="b-energy-text"></span></div>
-            <div class="b-status" id="b-hero-status"></div>
-          </div>
+        <div class="platform hero-platform"></div>
+        <div class="b-sprite hero-sprite" id="b-hero-sprite"></div>
+        <div class="info-box hero-box">
+          <div class="info-name pixel"><span id="b-hero-name"></span><span id="b-hero-level"></span></div>
+          <div class="hp-row"><span class="hp-tag pixel">HP</span><div class="hp-track"><div class="hp-fill" id="b-hero-hp"></div></div></div>
+          <div class="hp-numbers pixel" id="b-hero-hp-text"></div>
+          <div class="hp-row en-row"><span class="hp-tag en-tag pixel">EN</span><div class="hp-track en-track"><div class="en-fill" id="b-energy"></div></div></div>
+          <div class="status-row" id="b-hero-status"></div>
         </div>
       </div>
 
-      <div class="battle-log panel" id="b-log" aria-live="polite"></div>
-      <div class="battle-actions" id="b-actions"></div>
+      <div class="command-area" id="b-command" data-menu="wait">
+        <div class="text-box pixel" id="b-text" role="status" aria-live="polite"></div>
+        <div class="command-menu" id="b-actions"></div>
+      </div>
     </div>
   </div>
 
