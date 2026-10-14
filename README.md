@@ -56,19 +56,33 @@ On first launch you choose a class (you can change it later in **Camp**):
 
 ### Class promotions
 
-At **level 10**, every class can be promoted from the Hero screen. A promotion keeps
-your progress and adds a stronger XP bonus, an upgraded passive, an exclusive
-**Ultimate** combat skill, new titles and upgraded armor on your sprite.
+Every class promotes twice from the Hero screen: at **level 10** and again at **level 20**.
+Each promotion keeps your progress and adds a stronger XP bonus, an upgraded passive, an
+exclusive **Ultimate** combat skill (a fully promoted hero has two), new titles and upgraded
+armor on your sprite.
 
-| Base class | Promotes to   | XP bonus                       | Ultimate skill (grows with this challenge) |
-| ---------- | ------------- | ------------------------------ | ------------------------------------------ |
-| Barbarian  | **Chieftain** | 2.5× Strength                  | Warlord's Roar: heal 15% and +50% damage (overhead press) |
-| Assassin   | **Phantom**   | 2.5× Agility                   | Death Mark: 180% damage that always crits (squat) |
-| Monk       | **Master**    | 2.5× Wisdom                    | Thousand Palms: 6 armor-piercing strikes (push-ups) |
-| Warrior    | **Gladiator** | 1.75× everything               | Arena Fury: 3 heavy blows with +20% crit (pull-ups) |
-| Knight     | **Paladin**   | 2× Strength and Vitality       | Holy Light: heal 20% and +30% armor (meditation) |
+| Base class | Level 10        | Level 20           |
+| ---------- | --------------- | ------------------ |
+| Barbarian  | **Marauder**    | **Chieftain**      |
+| Assassin   | **Phantom**     | **Reaper**         |
+| Monk       | **Master**      | **Awakened**       |
+| Warrior    | **Gladiator**   | **Centurion**      |
+| Knight     | **Paladin**     | **Royal Guardian** |
 
-Picking your base class again in **Camp** keeps your promotion; switching to a different
+| Class          | XP bonus                    | Ultimate skill (grows with this challenge)                     |
+| -------------- | --------------------------- | -------------------------------------------------------------- |
+| Marauder       | 2.5× Strength               | Warlord's Roar: heal 15% and +50% damage (overhead press)       |
+| Chieftain      | 3× Strength                 | Horde's Fury: 4 savage blows with +20% crit (pull-ups)          |
+| Phantom        | 2.5× Agility                | Death Mark: 180% damage that always crits (squat)               |
+| Reaper         | 3× Agility                  | Soul Harvest: 200% damage that always crits, heals 15% (dead hang) |
+| Master         | 2.5× Wisdom                 | Thousand Palms: 6 armor-piercing strikes (push-ups)             |
+| Awakened       | 3× Wisdom                   | Enlightened Fist: 260% armor-piercing damage, heals 15% (5K)    |
+| Gladiator      | 1.75× everything            | Arena Fury: 3 heavy blows with +20% crit (pull-ups)             |
+| Centurion      | 2× everything               | Legion's Charge: 250% damage, 40% stun (sit-ups)                |
+| Paladin        | 2× Strength and Vitality    | Holy Light: heal 20% and +30% armor (meditation)                |
+| Royal Guardian | 2.25× Strength and Vitality | Sovereign's Aegis: heal 20% and block 60% (bench)               |
+
+Picking your base class again in **Camp** keeps your promotions; switching to a different
 class means promoting that one separately.
 
 ## How the game works
@@ -222,5 +236,5 @@ The app must be served over HTTPS to install. The easiest free option is GitHub 
 | `manifest.json`    | Makes the app installable                   |
 | `icons/`, `fonts/` | App icons and the Press Start 2P pixel font (OFL) |
 
-When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v14`) so installed
+When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v15`) so installed
 copies pick up the update.

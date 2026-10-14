@@ -46,8 +46,8 @@ const CLASSES = {
     bonus: { STR: 2 },
     bonusText: "2× XP on Strength training",
     base: { STR: 8, AGI: 4, WIS: 3, VIT: 5 },
-    titles: ["Wildling", "Brute", "Raider", "Berserker", "Marauder", "Warlord", "Titan", "Godslayer"],
-    promotion: "chieftain",
+    titles: ["Wildling", "Brute", "Raider", "Berserker", "Savage", "Warlord", "Titan", "Godslayer"],
+    promotion: "marauder",
     quests: [
       { id: "b1", name: "Iron Will", desc: "Train Strength for 30 minutes", stat: "STR", minutes: 30, xp: 60 },
       { id: "b2", name: "Lift the Mountain", desc: "Train Strength for 45 minutes", stat: "STR", minutes: 45, xp: 90 },
@@ -149,25 +149,29 @@ const CLASSES = {
   },
 };
 
-// Promoted classes: a base class can promote once the hero reaches this level.
-// They share their base class's sprite (recolored), quests and base stats.
-const PROMOTION_LEVEL = 10;
+// Promoted classes. Each base class promotes twice: tier 1 at level 10 and
+// tier 2 at level 20. Promoted classes share their base class's sprite
+// (recolored), quests and base stats.
+const PROMOTION_LEVELS = { 1: 10, 2: 20 };
 
 Object.assign(CLASSES, {
-  chieftain: {
-    name: "Chieftain",
+  // Tier 1
+  marauder: {
+    name: "Marauder",
     from: "barbarian",
+    promotion: "chieftain",
     color: "#f43f5e",
     body: "Massive & powerful",
-    tagline: "Leader of the clan. Your bodybuilder frame has become the stuff of legend.",
+    tagline: "A raider of legend. Your bodybuilder frame strikes fear into every village.",
     focus: "Heavy lifting, progressive overload, high-protein meals",
     bonus: { STR: 2.5 },
     bonusText: "2.5× XP on Strength training",
-    titles: ["Clan Blood", "Clan Champion", "Warband Leader", "Chieftain", "High Chieftain", "Warchief", "Horde King", "Lord of the Wilds"],
+    titles: ["Pillager", "Reaver", "Raid Leader", "Ravager of Lands", "Dread Marauder", "Scourge", "Warbringer", "Terror of the North"],
   },
   master: {
     name: "Master",
     from: "monk",
+    promotion: "awakened",
     color: "#fcd34d",
     body: "Supple & serene",
     tagline: "You have mastered mind and body. Your calm cannot be shaken.",
@@ -179,6 +183,7 @@ Object.assign(CLASSES, {
   gladiator: {
     name: "Gladiator",
     from: "warrior",
+    promotion: "centurion",
     color: "#ea580c",
     body: "Battle-hardened",
     tagline: "Champion of the arena. Strong, fast and fearless in every way.",
@@ -190,6 +195,7 @@ Object.assign(CLASSES, {
   phantom: {
     name: "Phantom",
     from: "assassin",
+    promotion: "reaper",
     color: "#67e8f9",
     body: "Lean, fast & unseen",
     tagline: "More shadow than flesh. Your speed and endurance have become supernatural.",
@@ -201,6 +207,7 @@ Object.assign(CLASSES, {
   paladin: {
     name: "Paladin",
     from: "knight",
+    promotion: "royal_guardian",
     color: "#f1f5f9",
     body: "Iron-willed & tireless",
     tagline: "A holy knight whose strength and endurance never fail.",
@@ -209,22 +216,92 @@ Object.assign(CLASSES, {
     bonusText: "2× XP on Strength and Vitality training",
     titles: ["Oathsworn", "Templar", "Crusader", "Holy Knight", "Lightbringer", "Grand Paladin", "Saint", "Divine Champion"],
   },
+
+  // Tier 2
+  chieftain: {
+    name: "Chieftain",
+    from: "marauder",
+    color: "#facc15",
+    body: "Colossal & commanding",
+    tagline: "Leader of every clan. Your strength has become the stuff of songs.",
+    focus: "Heavy lifting, progressive overload, high-protein meals",
+    bonus: { STR: 3 },
+    bonusText: "3× XP on Strength training",
+    titles: ["Clan Blood", "Clan Champion", "Warband Leader", "Chieftain", "High Chieftain", "Warchief", "Horde King", "Lord of the Wilds"],
+  },
+  awakened: {
+    name: "Awakened",
+    from: "master",
+    color: "#c4b5fd",
+    body: "Radiant & unshakeable",
+    tagline: "Your mind has opened to the stars. Body and spirit move as one light.",
+    focus: "Yoga, stretching, meditation and mindful movement",
+    bonus: { WIS: 3 },
+    bonusText: "3× XP on Wisdom training",
+    titles: ["Opened Eye", "Radiant One", "Starborn", "Lightwalker", "Celestial Sage", "Avatar", "Transcendent", "The Awakened One"],
+  },
+  centurion: {
+    name: "Centurion",
+    from: "gladiator",
+    color: "#dc2626",
+    body: "Disciplined & complete",
+    tagline: "Commander of the legion. Every part of your fitness is battle-ready.",
+    focus: "A mix of everything: strength, cardio and mobility",
+    bonus: { STR: 2, AGI: 2, WIS: 2, VIT: 2 },
+    bonusText: "2× XP on all training",
+    titles: ["Optio", "Centurion", "Primus Pilus", "Legate", "Tribune", "Imperator", "Conqueror", "Eternal Legion"],
+  },
+  reaper: {
+    name: "Reaper",
+    from: "phantom",
+    color: "#ef4444",
+    body: "Swift & relentless",
+    tagline: "Death itself runs at your side. Nothing outlasts you, nothing escapes you.",
+    focus: "Running, HIIT, cycling, sports and bodyweight work",
+    bonus: { AGI: 3 },
+    bonusText: "3× XP on Agility training",
+    titles: ["Death's Shadow", "Soul Taker", "Grim Blade", "Harvester", "Deathbringer", "Lord of Endings", "The Inevitable", "Death Incarnate"],
+  },
+  royal_guardian: {
+    name: "Royal Guardian",
+    from: "paladin",
+    color: "#60a5fa",
+    body: "Unbreakable & tireless",
+    tagline: "Sworn shield of the crown. Your strength and stamina guard a kingdom.",
+    focus: "Long steady sessions, rucking and hiking, circuits and functional strength",
+    bonus: { STR: 2.25, VIT: 2.25 },
+    bonusText: "2.25× XP on Strength and Vitality training",
+    titles: ["Sworn Shield", "Queen's Guard", "King's Shield", "Royal Champion", "Lord Commander", "Shield of the Realm", "Guardian Eternal", "Living Fortress"],
+  },
 });
-for (const c of Object.values(CLASSES)) {
-  if (!c.from) continue;
-  c.advanced = true;
-  c.base = CLASSES[c.from].base;
-  c.quests = CLASSES[c.from].quests;
+
+// A promoted class's original base class (or the class itself)
+function baseClass(cls) {
+  let c = cls;
+  while (CLASSES[c].from) c = CLASSES[c].from;
+  return c;
 }
 
-// A promoted class's original class (or the class itself)
-function baseClass(cls) {
-  return CLASSES[cls].from || cls;
+// 0 for a base class, 1 or 2 for promotions
+function classTier(cls) {
+  return CLASSES[cls].from ? classTier(CLASSES[cls].from) + 1 : 0;
+}
+
+for (const c of Object.keys(CLASSES)) {
+  if (!CLASSES[c].from) continue;
+  CLASSES[c].advanced = true;
+  CLASSES[c].base = CLASSES[baseClass(c)].base;
+  CLASSES[c].quests = CLASSES[baseClass(c)].quests;
+}
+
+// Level needed for the hero's next promotion (or null if there is none)
+function nextPromotionLevel(cls = settings.cls) {
+  return CLASSES[cls].promotion ? PROMOTION_LEVELS[classTier(cls) + 1] : null;
 }
 
 function canPromote() {
-  const promo = CLASSES[settings.cls].promotion;
-  return Boolean(promo) && levelInfo(totalXp()).level >= PROMOTION_LEVEL;
+  const need = nextPromotionLevel();
+  return need !== null && levelInfo(totalXp()).level >= need;
 }
 
 // Whether a class boosts every attribute equally (then no stat is highlighted)
@@ -257,6 +334,11 @@ const SPRITE_RECOLORS = {
   master: { o: "#f8fafc", O: "#cbd5e1", r: "#facc15", y: "#fde047" }, // white robe, gold sash
   gladiator: { m: "#d97706", M: "#92400e", b: "#dc2626", B: "#7f1d1d" }, // bronze helm, red tunic
   phantom: { c: "#3b4a6e", C: "#94a8d8", g: "#67e8f9", a: "#a5f3fc", b: "#1e293b" }, // pale ghostly cloak, glowing eyes
+  marauder: { m: "#3f3f46", w: "#b91c1c", f: "#1c1917", b: "#dc2626", h: "#9a3412" }, // black iron helm, blood-red horns
+  reaper: { c: "#0a0a0a", C: "#262626", g: "#ef4444", a: "#e7e5e4", b: "#450a0a" }, // black shroud, red eyes, bone blades
+  awakened: { o: "#c4b5fd", O: "#7c3aed", r: "#fde047", y: "#e0f2fe" }, // starlit violet robe
+  centurion: { m: "#facc15", M: "#a16207", b: "#991b1b", B: "#eab308" }, // gold helm and shield, legion red
+  royal_guardian: { a: "#e0e7ff", m: "#facc15", t: "#1d4ed8", T: "#1e3a8a", p: "#dc2626" }, // royal blue and gold
   paladin: { a: "#fefce8", m: "#facc15", t: "#f8fafc", T: "#f8fafc", p: "#fde047" }, // gold and white plate
 };
 
@@ -1189,11 +1271,12 @@ function renderPromotion(level) {
   card.hidden = !promoId;
   if (!promoId) return;
   const promo = CLASSES[promoId];
-  const ready = level >= PROMOTION_LEVEL;
+  const need = nextPromotionLevel();
+  const ready = level >= need;
   const ultimate = ULTIMATE_SKILLS[promoId];
   card.classList.toggle("ready", ready);
   card.innerHTML = `
-    <div class="quest-header pixel"><span>⚜ Class Promotion</span><span>${ready ? "Ready!" : `LV ${level} / ${PROMOTION_LEVEL}`}</span></div>
+    <div class="quest-header pixel"><span>⚜ ${classTier(promoId) === 2 ? "Second" : "Class"} Promotion</span><span>${ready ? "Ready!" : `LV ${level} / ${need}`}</span></div>
     <div class="promo-sprites">
       <div class="portrait">${heroSvg(settings.cls, settings.gear, CLASSES[settings.cls].name)}</div>
       <span class="promo-arrow pixel" aria-hidden="true">➜</span>
@@ -1208,7 +1291,7 @@ function renderPromotion(level) {
       <li>✨ New titles and upgraded armor</li>
     </ul>
     <button type="button" class="btn pixel" id="promote-btn" ${ready ? "" : "disabled"}>
-      ${ready ? `Promote to ${promo.name}` : `Reach LV ${PROMOTION_LEVEL} to promote`}
+      ${ready ? `Promote to ${promo.name}` : `Reach LV ${need} to promote`}
     </button>`;
 }
 
@@ -1593,7 +1676,8 @@ function celebrate(levelBefore, unlocks) {
       titleChanged ? `New title unlocked: ${newTitle}!` : "Your power grows. Keep training!"
     );
     const promoId = CLASSES[settings.cls].promotion;
-    if (promoId && levelBefore < PROMOTION_LEVEL && levelAfter >= PROMOTION_LEVEL) {
+    const need = nextPromotionLevel();
+    if (promoId && levelBefore < need && levelAfter >= need) {
       popup("⚜️", "Promotion Available!", `Your ${CLASSES[settings.cls].name} can now become a ${CLASSES[promoId].name}. Promote on the Hero screen.`);
     }
   }
@@ -1879,6 +1963,12 @@ for (const w of workouts) {
   }
 }
 if (migrated) persist();
+
+// Chieftain used to be the Barbarian's first promotion; below level 20 it is now Marauder
+if (settings.cls === "chieftain" && levelInfo(totalXp()).level < PROMOTION_LEVELS[2]) {
+  settings.cls = "marauder";
+  save(SETTINGS_KEY, settings);
+}
 
 // Catch up quietly on anything unlocked before this version or while away
 syncUnlocks();

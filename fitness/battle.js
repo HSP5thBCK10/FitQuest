@@ -143,10 +143,10 @@ const CLASS_SKILLS = {
   ],
 };
 
-// Each promoted class gains one exclusive ultimate skill. It unlocks with the
-// promotion itself and grows stronger with ranks in its challenge.
+// Each promoted class gains one exclusive ultimate skill (so a tier-2 hero has
+// two). It unlocks with the promotion and grows stronger with ranks in its challenge.
 const ULTIMATE_SKILLS = {
-  chieftain: { id: "warlords_roar", name: "Warlord's Roar", icon: "🦁", challenge: "ohp", cost: 45, ultimate: true,
+  marauder: { id: "warlords_roar", name: "Warlord's Roar", icon: "🦁", challenge: "ohp", cost: 45, ultimate: true,
     desc: "Heal 15% of max HP and +50% damage for 3 turns", effect: { heal: 0.15, buff: { atk: 0.5, turns: 3 } } },
   master: { id: "thousand_palms", name: "Thousand Palms", icon: "🙏", challenge: "pushups", cost: 50, ultimate: true,
     desc: "6 strikes of 35% damage that ignore armor", effect: { damage: 0.35, hits: 6, pierce: true } },
@@ -156,6 +156,16 @@ const ULTIMATE_SKILLS = {
     desc: "180% damage that always lands a critical hit", effect: { damage: 1.8, crit: 100 } },
   paladin: { id: "holy_light", name: "Holy Light", icon: "🌟", challenge: "meditation", cost: 50, ultimate: true,
     desc: "Heal 20% of max HP and +30% armor for 2 turns", effect: { heal: 0.2, buff: { def: 0.3, turns: 2 } } },
+  chieftain: { id: "hordes_fury", name: "Horde's Fury", icon: "🪓", challenge: "pullups", cost: 60, ultimate: true,
+    desc: "4 savage blows of 70% damage with +20% crit chance", effect: { damage: 0.7, hits: 4, crit: 20 } },
+  awakened: { id: "enlightened_fist", name: "Enlightened Fist", icon: "☀️", challenge: "fivek", cost: 60, ultimate: true,
+    desc: "260% damage that ignores armor and heals 15% of max HP", effect: { damage: 2.6, pierce: true, heal: 0.15 } },
+  centurion: { id: "legions_charge", name: "Legion's Charge", icon: "🛡️", challenge: "situps", cost: 60, ultimate: true,
+    desc: "250% damage with a 40% chance to stun", effect: { damage: 2.5, stun: 0.4 } },
+  reaper: { id: "soul_harvest", name: "Soul Harvest", icon: "⚰️", challenge: "deadhang", cost: 65, ultimate: true,
+    desc: "200% damage that always crits and heals 15% of max HP", effect: { damage: 2, crit: 100, heal: 0.15 } },
+  royal_guardian: { id: "sovereign_aegis", name: "Sovereign's Aegis", icon: "👑", challenge: "bench", cost: 60, ultimate: true,
+    desc: "Heal 20% of max HP and block 60% of damage for 2 turns", effect: { heal: 0.2, buff: { block: 0.6, turns: 2 } } },
 };
 
 const CLASS_PASSIVES = {
@@ -164,7 +174,12 @@ const CLASS_PASSIVES = {
   monk: "Inner Peace: heal 3% HP every turn",
   warrior: "Veteran: +15% damage and +15% armor",
   knight: "Endurance: +20% max HP, +10% armor, and power from both STR and VIT",
-  chieftain: "Warchief: +25% max HP, +5% power, muscle (STR) adds to HP, and heal 20% of damage dealt",
+  marauder: "Raider's Hunger: +25% max HP, +5% power, muscle (STR) adds to HP, and heal 20% of damage dealt",
+  chieftain: "Warchief: +30% max HP, +10% power, muscle (STR) adds to HP, and heal 25% of damage dealt",
+  awakened: "Awakening: heal 4.5% HP every turn, +8% dodge and +10% power",
+  centurion: "Legion Commander: +30% damage, +25% armor and +10% crit chance",
+  reaper: "Death's Embrace: +20% crit chance, +8% dodge, +10% power, and AGI adds to HP",
+  royal_guardian: "Royal Bulwark: +30% max HP, +20% armor, +5% power, and power from STR and VIT",
   master: "Enlightenment: heal 3.5% HP every turn, +5% dodge and +5% power",
   gladiator: "Arena Champion: +25% damage, +15% armor and +8% crit chance",
   phantom: "Wraith: +15% crit chance, +5% dodge, +5% power, and AGI adds to HP",
@@ -178,7 +193,12 @@ const muscle = (a) => a.VIT + a.STR * 0.5; // a barbarian's muscle mass counts t
 const stamina = (a) => a.VIT + a.AGI * 0.3; // an assassin's running stamina counts toward health
 const COMBAT_PROFILES = {
   barbarian: { primary: (a) => a.STR, toughness: muscle, hp: 1.2, lifesteal: 0.15 },
-  chieftain: { primary: (a) => a.STR, toughness: muscle, hp: 1.25, pow: 1.05, lifesteal: 0.2 },
+  marauder: { primary: (a) => a.STR, toughness: muscle, hp: 1.25, pow: 1.05, lifesteal: 0.2 },
+  chieftain: { primary: (a) => a.STR, toughness: muscle, hp: 1.3, pow: 1.1, lifesteal: 0.25 },
+  awakened: { primary: (a) => a.WIS, pow: 1.1, dodge: 8, regen: 0.045 },
+  centurion: { primary: balanced, pow: 1.3, def: 1.25, crit: 10 },
+  reaper: { primary: (a) => a.AGI, toughness: stamina, pow: 1.1, crit: 20, dodge: 8 },
+  royal_guardian: { primary: strAndVit, hp: 1.3, def: 1.2, pow: 1.05 },
   assassin: { primary: (a) => a.AGI, toughness: stamina, crit: 10 },
   phantom: { primary: (a) => a.AGI, toughness: stamina, pow: 1.05, crit: 15, dodge: 5 },
   monk: { primary: (a) => a.WIS, regen: 0.03 },
@@ -248,22 +268,29 @@ function dungeonUnlocked(index) {
 // ---------- Hero combat stats ----------
 
 // A class's 5 skills plus its promotion's ultimate (if it has one)
+// A class's skills plus the ultimate of every promotion along its chain.
+// Each ultimate is tagged with the class (and tier) that unlocks it.
 function classSkillList(cls) {
-  const base = baseClass(cls);
-  const ultimate = ULTIMATE_SKILLS[CLASSES[base].promotion];
-  return ultimate ? [...CLASS_SKILLS[base], ultimate] : CLASS_SKILLS[base];
+  const list = [...CLASS_SKILLS[baseClass(cls)]];
+  for (let c = CLASSES[baseClass(cls)].promotion; c; c = CLASSES[c].promotion) {
+    list.push({ ...ULTIMATE_SKILLS[c], from: c, tier: classTier(c) });
+  }
+  return list;
+}
+
+function ultimateUnlocked(s, cls = settings.cls) {
+  return classTier(cls) >= s.tier;
 }
 
 function combatSkillFor(cls, chId) {
-  return classSkillList(cls).find((s) => s.challenge === chId && (!s.ultimate || CLASSES[cls].advanced));
+  return classSkillList(cls).find((s) => s.challenge === chId && (!s.ultimate || ultimateUnlocked(s, cls)));
 }
 
 function combatSkills() {
   const discount = badgeBuffs().skillCost;
-  const promoted = Boolean(CLASSES[settings.cls].advanced);
   return classSkillList(settings.cls).map((s) => ({
     ...s,
-    rank: s.ultimate ? (promoted ? Math.max(1, skillRank(s.challenge)) : 0) : skillRank(s.challenge),
+    rank: s.ultimate ? (ultimateUnlocked(s) ? Math.max(1, skillRank(s.challenge)) : 0) : skillRank(s.challenge),
     cost: Math.max(5, s.cost - discount),
   }));
 }
@@ -1064,7 +1091,7 @@ function renderFight() {
         s.rank > 0
           ? `Rank ${RANKS[s.rank - 1]} · ${Math.round(skillPower(s.rank) * 100)}% power · ${s.cost} EN`
           : s.ultimate
-            ? `🔒 Promote to ${CLASSES[CLASSES[settings.cls].promotion].name} at LV ${PROMOTION_LEVEL} to unlock`
+            ? `🔒 Become a ${CLASSES[s.from].name} (LV ${PROMOTION_LEVELS[s.tier]}) to unlock`
             : `🔒 Learn it: reach rank I in ${ch.name}`;
       return `
         <li class="skill ${s.rank ? "" : "locked"}">
