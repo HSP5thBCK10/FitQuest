@@ -1,5 +1,5 @@
 // Bump this version whenever app files change so users get the update
-const CACHE = "fitquest-v18";
+const CACHE = "fitquest-v19";
 const ASSETS = [
   "./",
   "index.html",
@@ -16,7 +16,7 @@ const ASSETS = [
 ];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)));
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS.map((url) => new Request(url, { cache: "reload" })))));
   self.skipWaiting();
 });
 
@@ -33,6 +33,14 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+    caches.match(event.request, { ignoreSearch: event.request.mode === "navigate" }).then(
+      (cached) =>
+        cached ||
+        fetch(event.request).catch((err) => {
+          // Offline and the address isn't cached exactly (e.g. no trailing slash): serve the app
+          if (event.request.mode === "navigate") return caches.match("./");
+          throw err;
+        })
+    )
   );
 });

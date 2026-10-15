@@ -443,7 +443,6 @@ function startDungeon(index) {
 function enterEnemy() {
   const e = battle.enemy;
   battle.events.push({ type: "enter" });
-  Music.play(e.boss ? "boss" : "battle");
   addLog(e.boss ? `The boss ${e.name} appeared!` : `A wild ${e.name} appeared!`);
   if (e.ability) addLog(ABILITY_WARNINGS[e.ability]);
 }
@@ -495,14 +494,15 @@ function useSkill(skill) {
   addLog(`${heroName()} used ${skill.name}!`);
 
   if (fx.damage) {
-    strikeMessages(heroStrike(fx.damage * power, fx));
+    const strike = heroStrike(fx.damage * power, fx);
+    strikeMessages(strike);
     if (fx.recoil) {
       const recoil = Math.round(battle.stats.maxHp * fx.recoil);
       battle.hp = Math.max(1, battle.hp - recoil);
       addLog(`${heroName()} is hurt by the recoil!`);
-      floatText("hero", String(recoil), "hurt");
+      floatText("hero", String(recoil), "hurt self");
     }
-    if (fx.stun && e.hp > 0) {
+    if (fx.stun && strike.landed && e.hp > 0) {
       // Bosses resist stuns, and nothing can be stunned two turns in a row
       const chance = e.stunImmune ? 0 : (fx.stun + 0.1 * (skill.rank - 1)) * (e.boss ? 0.5 : 1);
       if (Math.random() < chance) {
@@ -512,7 +512,7 @@ function useSkill(skill) {
         addLog(`${foe()} resisted the stun!`);
       }
     }
-    if (fx.poison && e.hp > 0) {
+    if (fx.poison && strike.landed && e.hp > 0) {
       e.dot = { dmg: Math.max(1, Math.round(battle.stats.pow * fx.poison.pct * power)), turns: fx.poison.turns, label: "Poison" };
       addLog(`${foe()} was poisoned!`);
     }
@@ -533,7 +533,7 @@ function useSkill(skill) {
     if (b.regen) b.regen *= power;
     if (b.block) b.block = Math.min(b.block + 0.1 * (skill.rank - 1), 0.8);
     if (b.dodge) b.dodge += 10 * (skill.rank - 1);
-    battle.buffs.push(b);
+    battle.buffs.push({ ...b, fresh: true });
     addLog(buffMessage(b));
   }
 }
@@ -561,7 +561,7 @@ function useItem(id) {
     addLog("Ka-boom!");
   } else if (id === "power_tonic" || id === "iron_tonic") {
     const b = id === "power_tonic" ? { atk: 0.3, turns: 3, name: "Power" } : { def: 0.4, turns: 3, name: "Iron" };
-    battle.buffs.push(b);
+    battle.buffs.push({ ...b, fresh: true });
     addLog(buffMessage(b));
   }
 }
@@ -608,7 +608,7 @@ function enemyStrike(mult, announce = true) {
     }
   }
   if (e.ability === "curse" && !battle.curse && Math.random() < 0.35) {
-    battle.curse = 2;
+    battle.curse = 3; // ticks down at the end of this round, then weakens the next 2 actions
     addLog(`${heroName()} was cursed! Damage fell!`);
   }
   if ((e.ability === "poison" || e.ability === "burn") && !battle.dot && Math.random() < 0.35) {
@@ -683,7 +683,10 @@ function endRound() {
   if (regen && battle.hp > 0) heal(regen);
   if (battle.curse) battle.curse--;
   battle.energy = Math.min(MAX_ENERGY, battle.energy + battle.stats.energyPerTurn);
-  battle.buffs = battle.buffs.map((b) => ({ ...b, turns: b.turns - 1 })).filter((b) => b.turns > 0);
+  // Damage buffs only help the hero's next actions, so they don't tick down in the round they're cast
+  battle.buffs = battle.buffs
+    .map((b) => ({ ...b, fresh: false, turns: b.fresh && b.atk && !b.block && !b.def ? b.turns : b.turns - 1 }))
+    .filter((b) => b.turns > 0);
 }
 
 async function act(action) {
@@ -720,7 +723,7 @@ async function act(action) {
   enemyTurn();
   if (!(await present())) return;
   if (battle.enemy.hp <= 0) return enemyDefeated();
-  if (battle.hp <= 0) return defeat();
+  if (battle.hp <= 0) return defeat(true);
 
   endRound();
   if (!(await present())) return;
@@ -746,6 +749,7 @@ async function enemyDefeated() {
     battle.floor++;
     battle.buffs = [];
     battle.dot = null;
+    battle.curse = 0;
     const healed = heal(0.3);
     if (healed) addLog(`${heroName()} caught their breath and recovered ${healed} HP.`);
     battle.enemy = monsterOnFloor(battle.dungeon, battle.floor);
@@ -780,15 +784,17 @@ function victory() {
   celebrate(level, unlocks);
 }
 
-async function defeat() {
+async function defeat(midRound = false) {
   if (shop.items.phoenix > 0) {
     shop.items.phoenix--;
     saveShop();
     battle.hp = Math.round(battle.stats.maxHp * 0.4);
     battle.dot = null;
+    battle.curse = 0;
     addLog("The Phoenix Feather bursts into flame!");
     floatText("hero", `+${battle.hp}`, "heal");
     addLog(`${heroName()} rose from the ashes!`);
+    if (midRound) endRound();
     if (!(await present())) return;
     battle.busy = false;
     battle.menu = "main";
@@ -902,7 +908,7 @@ function vibrationFor(ev) {
 async function playHit(ev) {
   const target = $(ev.target === "enemy" ? "b-enemy-sprite" : "b-hero-sprite");
   const attacker = $(ev.target === "enemy" ? "b-hero-sprite" : "b-enemy-sprite");
-  const isAttack = ev.cls !== "heal" && ev.cls !== "dot";
+  const isAttack = ev.cls !== "heal" && ev.cls !== "dot" && !ev.cls.includes("self");
   if (isAttack) {
     restartAnimation(attacker, ev.target === "enemy" ? "lunge-right" : "lunge-left");
     await wait(160);
@@ -927,6 +933,7 @@ async function playFaint(side) {
 }
 
 async function playEnter() {
+  Music.play(battle.enemy.boss ? "boss" : "battle");
   battle.shownEnemy = battle.enemy;
   battle.shown.enemyHp = battle.enemy.hp;
   renderBattle();

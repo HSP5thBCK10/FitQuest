@@ -806,8 +806,9 @@ function goldEarned() {
   );
 }
 
+// Can go negative if a workout whose gold was already spent is deleted
 function goldBalance() {
-  return Math.max(0, goldEarned() - shop.spent);
+  return goldEarned() - shop.spent;
 }
 
 function skillXp() {
@@ -883,7 +884,8 @@ function currentStreak() {
 // Each class has its own quest pool; one is chosen per day
 function questFor(key, cls) {
   const pool = CLASSES[cls].quests;
-  const dayNumber = Math.round(fromKey(key).getTime() / 86400000);
+  const [y, m, d] = key.split("-").map(Number);
+  const dayNumber = Date.UTC(y, m - 1, d) / 86400000;
   return pool[((dayNumber % pool.length) + pool.length) % pool.length];
 }
 
@@ -1667,6 +1669,16 @@ $("begin-btn").addEventListener("click", () => {
     if (!settings.tutorialDone) afterPopups = startTutorial;
   } else if (changed) {
     toast(`You are now a ${c.name}!`);
+    // The new class has a different daily quest, which today's workouts may already meet
+    const levelBefore = levelInfo(totalXp()).level;
+    const completed = syncQuest(toKey(new Date()));
+    if (completed) {
+      persist();
+      const unlocks = syncUnlocks();
+      render();
+      popup("📜", "Quest Complete!", `${completed.name}: +${completed.xp} bonus XP and ${GOLD_PER_QUEST} gold`);
+      celebrate(levelBefore, unlocks);
+    }
   }
 });
 
@@ -1972,8 +1984,10 @@ document.addEventListener("click", (event) => {
     render();
     return;
   }
-  if (!confirm("Delete this workout? Its XP will be removed.")) return;
   const removed = workouts.find((w) => w.id === btn.dataset.id);
+  const goldAfter = goldBalance() - (removed ? workoutGold(removed.duration) : 0);
+  const warning = goldAfter < 0 ? ` Its gold was already spent, so your gold will drop to ${goldAfter} until you earn it back.` : "";
+  if (!confirm(`Delete this workout? Its XP will be removed.${warning}`)) return;
   workouts = workouts.filter((w) => w !== removed);
   if (removed) {
     syncQuest(removed.date);
@@ -2025,7 +2039,9 @@ settingsForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const status = $("settings-status");
   const goal = Math.round(Number(settingsForm.goal.value));
-  const weight = Math.round(fromDisplayWeight(Number(settingsForm.weight.value)) * 10) / 10;
+  const boxWeight = Number(settingsForm.weight.value);
+  // Only convert back if edited: lb are shown rounded, so converting every save would drift
+  const weight = boxWeight === toDisplayWeight(settings.weight) ? settings.weight : Math.round(fromDisplayWeight(boxWeight) * 10) / 10;
   status.className = "form-status";
 
   if (!(goal >= 10 && goal <= 5000) || !(weight >= 20 && weight <= 300)) {
@@ -2033,10 +2049,12 @@ settingsForm.addEventListener("submit", (event) => {
     status.classList.add("error");
     return;
   }
+  const levelBefore = levelInfo(totalXp()).level;
   settings = { ...settings, goal, weight };
   save(SETTINGS_KEY, settings);
-  syncUnlocks();
+  const unlocks = syncUnlocks();
   render();
+  celebrate(levelBefore, unlocks);
   status.textContent = "Saved.";
   status.classList.add("success");
 });
@@ -2102,7 +2120,15 @@ Music.play("town");
 
 // Re-render if the app is left open past midnight
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) render();
+  if (document.hidden) return;
+  const today = toKey(new Date());
+  if (form.date.max !== today) {
+    if (form.date.value === form.date.max) form.date.value = today;
+    if (featForm["feat-date"].value === featForm["feat-date"].max) featForm["feat-date"].value = today;
+    form.date.max = today;
+    featForm["feat-date"].max = today;
+  }
+  render();
 });
 
 // Offline support

@@ -83,6 +83,10 @@ const Music = (() => {
     master = ctx.createGain();
     master.gain.value = 0.35;
     master.connect(ctx.destination);
+    // iOS can interrupt audio (calls, Siri) while the page stays open: resume afterwards
+    ctx.onstatechange = () => {
+      if (ctx.state === "interrupted" && !document.hidden && enabled()) ctx.resume().catch(() => {});
+    };
     noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
     const data = noise.getChannelData(0);
     for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
@@ -158,6 +162,14 @@ const Music = (() => {
     const track = current;
     if (!track || ctx.state !== "running") return;
     const stepDur = 30 / track.song.bpm;
+    // If the page stalled (e.g. a confirm dialog), skip the missed notes instead of playing them all at once
+    if (track.nextTime < ctx.currentTime) {
+      const missed = Math.ceil((ctx.currentTime - track.nextTime) / stepDur);
+      track.step += missed;
+      track.nextTime += missed * stepDur;
+      if (!track.song.loop && track.step >= track.song.leadNotes.length) return stopTrack();
+      track.step %= track.song.leadNotes.length;
+    }
     while (track.nextTime < ctx.currentTime + 0.15) {
       if (track.step >= track.song.leadNotes.length) {
         if (!track.song.loop) return stopTrack();
@@ -177,6 +189,8 @@ const Music = (() => {
     out.gain.linearRampToValueAtTime(0, now + 0.15);
     setTimeout(() => out.disconnect(), 400);
     current = null;
+    clearInterval(timer);
+    timer = null;
   }
 
   function start(name) {
@@ -200,7 +214,7 @@ const Music = (() => {
     wanted = name;
     if (!enabled() || !setup()) return;
     if (ctx.state === "running") return startIfNeeded(name);
-    ctx.resume().then(() => wanted === name && startIfNeeded(name)).catch(() => {});
+    ctx.resume().then(() => wanted === name && enabled() && startIfNeeded(name)).catch(() => {});
   }
 
   function startIfNeeded(name) {
@@ -217,7 +231,7 @@ const Music = (() => {
     const resume = ctx.state === "running" ? Promise.resolve() : ctx.resume();
     resume
       .then(() => {
-        if (wanted && SONGS[wanted].loop) startIfNeeded(wanted);
+        if (wanted && SONGS[wanted].loop && enabled() && !document.hidden) startIfNeeded(wanted);
       })
       .catch(() => {});
   }

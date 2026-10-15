@@ -252,5 +252,5 @@ The app must be served over HTTPS to install. The easiest free option is GitHub 
 | `manifest.json`    | Makes the app installable                   |
 | `icons/`, `fonts/` | App icons and the Press Start 2P pixel font (OFL) |
 
-When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v18`) so installed
+When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v19`) so installed
 copies pick up the update.
