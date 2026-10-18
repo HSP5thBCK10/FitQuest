@@ -1,6 +1,8 @@
 
 # FitQuest ⚔️ Level up in real life
 
+### ▶️ [Play now: hsp5thbck10.github.io/FitQuest](https://hsp5thbck10.github.io/FitQuest/)
+
 **Turn every workout into an adventure.** FitQuest is a retro RPG where your real training
 powers your hero. Every run, lift and yoga session earns XP. Hit new personal records to
 learn battle skills, then take your hero into pixel-art dungeons to prove it.
@@ -234,7 +236,7 @@ Then open http://localhost:8000. Everything works this way, including offline su
 Put the game on the web for free with GitHub Pages: in the repo, open **Settings → Pages**,
 choose **Deploy from a branch**, pick your branch and the `/ (root)` folder, and save. After
 a minute or two the site's main address opens the game straight away, in any browser, with
-nothing to download. (The `index.html` at the top of the repo just forwards visitors to
+nothing to download. The live game is at **https://hsp5thbck10.github.io/FitQuest/**. (The `index.html` at the top of the repo just forwards visitors to
 `fitness/`.)
 
 ## Installing on your phone
