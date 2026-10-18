@@ -185,13 +185,29 @@ switch mutes it.
 
 ## Running it
 
+### Easiest: download the ZIP (no setup)
+
+1. On the repository's GitHub page, click the green **Code** button, then **Download ZIP**.
+2. Unzip the downloaded file.
+3. Open the `fitness` folder inside it and double-click **`index.html`**.
+
+The game opens in your web browser and is fully playable. Your progress is saved in that
+browser on that computer. A few things only work when the app is served from a web address
+(see the options below): offline mode, installing to your home screen, and, in Chrome, the
+pixel-art font (Chrome blocks it for opened files and uses a plain font instead).
+
+To get a newer version, download the ZIP again and unzip it to the same place, replacing
+the old folder. Your progress stays in the browser, but **Export** in **Camp** is a good
+backup. This works on a computer. On a phone, use the install steps below instead.
+
+### With a local server
+
 ```bash
 cd fitness
 python3 -m http.server 8000
 ```
 
-Then open http://localhost:8000 (offline support needs a server, so double-clicking
-`index.html` won't enable it).
+Then open http://localhost:8000. Everything works this way, including offline support.
 
 ## Installing on your phone
 
