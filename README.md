@@ -1,9 +1,23 @@
 
-# FitQuest (fitness RPG app)
+# FitQuest ⚔️ Level up in real life
 
-A video-game-style fitness tracker in the `fitness/` folder. Your workouts earn XP that
-levels up your hero. It's a Progressive Web App (PWA): it runs in your phone's browser,
-can be installed to the home screen like a normal app, and works offline.
+**Turn every workout into an adventure.** FitQuest is a retro RPG where your real training
+powers your hero. Every run, lift and yoga session earns XP. Hit new personal records to
+learn battle skills, then take your hero into pixel-art dungeons to prove it.
+
+- 🛡️ **Pick your path:** Barbarian, Assassin, Monk, Warrior or Knight, each rewarding a
+  different style of training. Promote your hero twice, at levels 10 and 20.
+- 💪 **Your gains are your power:** your hero's HP, strength and skills come from your real
+  workouts. You can't grind your way through. You have to train.
+- 🏆 **Records unlock skills:** beat your bench press, mile time or plank to learn new class
+  moves, and keep improving to make them stronger.
+- 🐉 **Turn-based dungeon battles:** classic monster-battle style across 10 dungeons and
+  30 monsters, from a Goblin King to the Demon King, with a chiptune soundtrack.
+- 🎁 **Loot to chase:** 38 badges with permanent buffs, 31 pieces of gear, daily quests,
+  weekly bounties and a gold shop.
+
+Free, no account needed, and your data never leaves your device. It's a web app in the
+`fitness/` folder that installs to your phone's home screen and works offline.
 
 ## Classes
 
