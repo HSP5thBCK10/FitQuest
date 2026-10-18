@@ -207,20 +207,32 @@ switch mutes it.
 
 ## Running it
 
-### Easiest: download the ZIP (no setup)
+### Play online (easiest)
+
+**Just open [hsp5thbck10.github.io/FitQuest](https://hsp5thbck10.github.io/FitQuest/).**
+The game starts right in your browser on any phone, tablet or computer. There's nothing to
+download and no account to make. Your hero and workouts are saved in that browser, so come
+back on the same device and browser to pick up where you left off. (Private/incognito
+windows forget everything when closed.)
+
+Want it to feel like a real app? Add it to your home screen (see
+[Installing on your phone](#installing-on-your-phone)) for its own icon, full-screen play
+and offline use.
+
+### Download the ZIP (no internet needed)
 
 1. On the repository's GitHub page, click the green **Code** button, then **Download ZIP**.
 2. Unzip the downloaded file.
 3. Open the `fitness` folder inside it and double-click **`index.html`**.
 
 The game opens in your web browser and is fully playable. Your progress is saved in that
-browser on that computer. A few things only work when the app is served from a web address
-(see the options below): offline mode, installing to your home screen, and, in Chrome, the
-pixel-art font (Chrome blocks it for opened files and uses a plain font instead).
+browser on that computer. A few things only work when the app is served from a web address:
+offline mode, installing to your home screen, and, in Chrome, the pixel-art font (Chrome
+blocks it for opened files and uses a plain font instead).
 
 To get a newer version, download the ZIP again and unzip it to the same place, replacing
 the old folder. Your progress stays in the browser, but **Export** in **Camp** is a good
-backup. This works on a computer. On a phone, use the install steps below instead.
+backup. This works on a computer. On a phone, play online instead.
 
 ### With a local server
 
@@ -231,13 +243,14 @@ python3 -m http.server 8000
 
 Then open http://localhost:8000. Everything works this way, including offline support.
 
-## Play online
+### Hosting your own copy
 
-Put the game on the web for free with GitHub Pages: in the repo, open **Settings → Pages**,
-choose **Deploy from a branch**, pick your branch and the `/ (root)` folder, and save. After
-a minute or two the site's main address opens the game straight away, in any browser, with
-nothing to download. The live game is at **https://hsp5thbck10.github.io/FitQuest/**. (The `index.html` at the top of the repo just forwards visitors to
-`fitness/`.)
+The live site runs on GitHub Pages, which is free. To publish your own copy: in the repo,
+open **Settings → Pages**, choose **Deploy from a branch**, pick your branch and the
+`/ (root)` folder, and save. After a minute or two the site's main address opens the game.
+(The `index.html` at the top of the repo just forwards visitors to `fitness/`.) If the page
+still says "not found" right after publishing, your browser saved the old error: do a hard
+refresh (Ctrl+Shift+R / Cmd+Shift+R) or wait about 10 minutes.
 
 ## Installing on your phone
 
