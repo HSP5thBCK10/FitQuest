@@ -229,15 +229,24 @@ python3 -m http.server 8000
 
 Then open http://localhost:8000. Everything works this way, including offline support.
 
+## Play online
+
+Put the game on the web for free with GitHub Pages: in the repo, open **Settings → Pages**,
+choose **Deploy from a branch**, pick your branch and the `/ (root)` folder, and save. After
+a minute or two the site's main address opens the game straight away, in any browser, with
+nothing to download. (The `index.html` at the top of the repo just forwards visitors to
+`fitness/`.)
+
 ## Installing on your phone
 
-The app must be served over HTTPS to install. The easiest free option is GitHub Pages
-(repo **Settings → Pages**, deploy from your branch), then visit `/fitness/`:
+To add it to your home screen like an app, open the website on your phone, then:
 
 - **iPhone (Safari):** Share → *Add to Home Screen*
 - **Android (Chrome):** menu ⋮ → *Install app*
 
 ## Files
+
+All in the `fitness/` folder (the repo's top-level `index.html` only redirects there):
 
 | File               | Purpose                                     |
 | ------------------ | ------------------------------------------- |
