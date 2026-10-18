@@ -125,13 +125,18 @@ battlefield backdrop:
 | Desert Ruins   | 26      | Giant Scorpion, Mummy, Cursed Pharaoh     |
 | Shadow Realm   | 30      | Shade, Nightmare, Shadow Lord             |
 | The Abyss      | 35      | Gargoyle, Demon, Demon King               |
- Battles are
-turn-based and play out like a classic Pokémon battle: your hero (seen from behind, in
-their class armor and equipped gear) and the monster (each with its own pixel-art sprite)
-face off on the battlefield with HP boxes, messages type out one at a time ("A wild Goblin
-appeared!", "A critical hit!"), and you choose **FIGHT** (Strike or one of your class
-moves, which cost energy), **BAG** (Potions, 2 per run), **GUARD** or **RUN**. Tap the
-message box to speed through text.
+
+Battles are turn-based and play out like a classic Pokémon battle. Your hero (seen from
+behind, in their class armor and equipped gear) faces the monster (each with its own
+pixel-art sprite) on the battlefield, with HP boxes for both. Messages type out one at a
+time ("A wild Goblin appeared!", "A critical hit!"). Each turn you choose:
+
+- **FIGHT:** Strike, or one of your class moves (these cost energy)
+- **BAG:** Potions (2 per run) and items from the shop
+- **GUARD:** halve the damage you take this turn
+- **RUN:** leave the dungeon
+
+Tap the message box to speed through text.
 
 On phones that support it, attacks vibrate: a short tap when you land a hit, a double pulse
 for a critical hit, a heavier buzz when you take damage (strongest for boss smashes), and a
@@ -189,6 +194,7 @@ switch mutes it.
 | Battle stats | First Blood +5% HP · Endurance +10% HP · Legend +10% HP & power · Centurion +10% power · Rising Hero +5% power · Monster Hunter +5% power · Champion +10% armor · On Fire +3% crit · Grandmaster +5% crit · First 5K +2% dodge · 10K Club +3% dodge · Jack of All Trades +2 every attribute |
 | Dungeon perks | Adventurer +1 potion · Explorer potions heal +10% · Marathoner 1% HP regen per turn · Unstoppable +15 starting energy · Goal Crusher +5 energy per turn · Skilled skills cost 5 less · Dungeon Delver +10% boss damage |
 | Newer badges | Realm Walker +10% power · Slayer +5% crit · Treasure Hunter +1 potion · Good Customer potions heal +10% · Bounty Hunter +25% quest XP · Legendary Hunter +10% XP · Iron Devotion +10% armor · Completionist +3 every attribute · Mythic +15% HP & +10% power |
+
 - **31 pieces of unlockable gear** in 4 slots: headgear, capes, companion pets and
   auras. Unlock them by leveling up, earning badges or clearing dungeons, and equip them in **Loot**:
   they appear on your pixel hero. Top-tier items give a permanent +5% XP bonus each
