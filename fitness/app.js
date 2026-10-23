@@ -1985,8 +1985,17 @@ document.addEventListener("click", (event) => {
     return;
   }
   const removed = workouts.find((w) => w.id === btn.dataset.id);
-  const goldAfter = goldBalance() - (removed ? workoutGold(removed.duration) : 0);
-  const warning = goldAfter < 0 ? ` Its gold was already spent, so your gold will drop to ${goldAfter} until you earn it back.` : "";
+  // Work out the gold after deleting, including any quest or bounty reward it takes back
+  const before = { workouts, questAwards: [...questAwards], bountyAwards: [...bountyAwards] };
+  const goldBefore = goldBalance();
+  workouts = workouts.filter((w) => w !== removed);
+  if (removed) {
+    syncQuest(removed.date);
+    syncBounty(weekOf(removed.date));
+  }
+  const goldAfter = goldBalance();
+  ({ workouts, questAwards, bountyAwards } = before);
+  const warning = goldAfter < 0 && goldAfter < goldBefore ? ` Its gold was already spent, so your gold will drop to ${goldAfter} until you earn it back.` : "";
   if (!confirm(`Delete this workout? Its XP will be removed.${warning}`)) return;
   workouts = workouts.filter((w) => w !== removed);
   if (removed) {
@@ -2027,7 +2036,10 @@ showWeightSetting();
 
 // Switching units converts the number already in the box
 settingsForm.units.addEventListener("change", () => {
-  const kg = fromDisplayWeight(Number(settingsForm.weight.value));
+  // If the box still shows the saved weight, re-show the saved value instead of converting the
+  // rounded number (converting 154 lb back gives 69.9 kg, not the saved 70)
+  const unchanged = Number(settingsForm.weight.value) === toDisplayWeight(settings.weight);
+  const kg = unchanged ? settings.weight : fromDisplayWeight(Number(settingsForm.weight.value));
   settings.units = settingsForm.units.value;
   save(SETTINGS_KEY, settings);
   if (kg > 0) settingsForm.weight.value = toDisplayWeight(kg);

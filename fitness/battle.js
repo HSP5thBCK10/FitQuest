@@ -533,7 +533,11 @@ function useSkill(skill) {
     if (b.regen) b.regen *= power;
     if (b.block) b.block = Math.min(b.block + 0.1 * (skill.rank - 1), 0.8);
     if (b.dodge) b.dodge += 10 * (skill.rank - 1);
-    battle.buffs.push({ ...b, fresh: true });
+    // The damage part only helps the hero's next attacks, so it's kept as its own buff that
+    // skips the countdown in the round it's cast (see endRound); defensive parts tick at once
+    const { atk, ...rest } = b;
+    if (atk) battle.buffs.push({ atk, turns: b.turns, name: b.name, fresh: true });
+    if (!atk || Object.keys(rest).some((k) => k !== "turns" && k !== "name")) battle.buffs.push(rest);
     addLog(buffMessage(b));
   }
 }
@@ -1002,7 +1006,7 @@ function renderBattle() {
 
   $("b-hero-name").textContent = heroName();
   $("b-hero-level").textContent = `Lv${levelInfo(totalXp()).level}`;
-  const heroStatus = b.buffs.map((x) => ["buff", x.name.toUpperCase()]);
+  const heroStatus = [...new Set(b.buffs.map((x) => x.name.toUpperCase()))].map((name) => ["buff", name]);
   if (b.dot) heroStatus.push([b.dot.label === "Burn" ? "brn" : "psn", b.dot.label === "Burn" ? "BRN" : "PSN"]);
   if (b.curse) heroStatus.push(["crs", "CURSE"]);
   $("b-hero-status").innerHTML = chips(heroStatus);
