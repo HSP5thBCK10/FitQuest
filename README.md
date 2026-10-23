@@ -106,7 +106,7 @@ record gives +30 XP.
 | Wall Sit       | 1:00 → 2:00 → 4:00                      | Stone Seat, Iron Legs, Mountain Root        |
 | 2K Row         | 9:00 → 8:00 → 7:00                      | Oarsman, Tidebreaker, Storm Rower           |
 
-Lifts use your estimated one-rep max (weight × reps), compared to your body weight at the
+Lifts use your estimated one-rep max (weight × (1 + reps ÷ 30)), compared to your body weight at the
 time of the lift, so ranks are fair for every size. Weights can be entered in kg or lb
 (set in **Camp**).
 
@@ -156,9 +156,11 @@ switch mutes it.
 - **Your battle stats come from real training.** HP, power, armor, crit and dodge are
   based on your level and attributes, so you can't grind your way through: you get
   stronger by working out.
-- **Combat skills are unique to each class** (7 each, plus an Ultimate) and are learned through
-  challenges: reach rank I in the matching challenge to unlock a skill, and every higher
-  rank makes it stronger (+25% power per rank).
+- **Combat skills are unique to each class** (7 each, plus an Ultimate for each promotion) and are
+  learned through challenges: reach rank I in the matching challenge to unlock a skill. Every
+  higher rank makes it stronger: +25% damage, healing and buff strength, and +10 points of
+  stun, block or dodge chance. Bosses resist stuns (half the chance), and nothing can be
+  stunned two turns in a row.
 
 | Class     | Combat skills (challenge that teaches it)                                                                    |
 | --------- | ------------------------------------------------------------------------------------------------------------ |
@@ -199,8 +201,8 @@ switch mutes it.
 
 - **31 pieces of unlockable gear** in 4 slots: headgear, capes, companion pets and
   auras. Unlock them by leveling up, earning badges or clearing dungeons, and equip them in **Loot**:
-  they appear on your pixel hero. Top-tier items give a permanent +5% XP bonus each
-  (applies to new workouts).
+  they appear on your pixel hero. Top-tier items give +5% XP while equipped (one item per
+  slot, so up to +20%; applies to new workouts).
 - Popups announce new badges and gear when you earn them. Deleting workouts can take
   them away again.
 - Data is stored only on your device; export it from **Camp**
@@ -275,5 +277,5 @@ All in the `fitness/` folder (the repo's top-level `index.html` only redirects t
 | `manifest.json`    | Makes the app installable                   |
 | `icons/`, `fonts/` | App icons and the Press Start 2P pixel font (OFL) |
 
-When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v22`) so installed
+When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v23`) so installed
 copies pick up the update.

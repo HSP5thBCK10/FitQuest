@@ -54,7 +54,7 @@ const CLASSES = {
       { id: "b3", name: "War Cry", desc: "Complete 2 training sessions", sessions: 2, xp: 60 },
       { id: "b4", name: "Bulk Up", desc: "Lift weights for 20 minutes", type: "strength", minutes: 20, xp: 50 },
       { id: "b5", name: "Berserker's Hour", desc: "Train for 60 minutes", minutes: 60, xp: 90 },
-      { id: "b6", name: "Climb the Cliffs", desc: "Climb or do calisthenics for 25 minutes", type: "calisthenics", minutes: 25, xp: 55 },
+      { id: "b6", name: "Climb the Cliffs", desc: "Climb or do calisthenics for 25 minutes", types: ["climbing", "calisthenics"], minutes: 25, xp: 55 },
       { id: "b7", name: "Raid Party", desc: "Complete 3 training sessions", sessions: 3, xp: 90 },
       { id: "b8", name: "Warpaint", desc: "Train Strength for 60 minutes", stat: "STR", minutes: 60, xp: 110 },
     ],
@@ -459,7 +459,7 @@ const BADGES = [
   { id: "lvl10", icon: "🌟", name: "Champion", desc: "Reach level 10", check: (c) => [c.level, 10] },
   { id: "lvl20", icon: "💫", name: "Legend", desc: "Reach level 20", check: (c) => [c.level, 20] },
   { id: "pr", icon: "📈", name: "Personal Best", desc: "Record your first challenge", check: (c) => [c.feats, 1] },
-  { id: "skills5", icon: "📖", name: "Skilled", desc: "Learn 5 skills", check: (c) => [c.skills, 5] },
+  { id: "skills5", icon: "📖", name: "Skilled", desc: "Earn 5 skill ranks", check: (c) => [c.skills, 5] },
   { id: "mastery", icon: "🥋", name: "Grandmaster", desc: "Reach rank III in any skill", check: (c) => [c.maxRank, 3] },
   { id: "delver", icon: "🗝️", name: "Dungeon Delver", desc: "Clear your first dungeon", check: (c) => [c.clears, 1] },
   { id: "hunter", icon: "☠️", name: "Monster Hunter", desc: "Defeat 50 monsters", check: (c) => [c.kills, 50] },
@@ -540,7 +540,7 @@ const BUFF_LABELS = {
   xpAGI: (v) => `+${v}% XP on Agility workouts`,
   xpWIS: (v) => `+${v}% XP on Wisdom workouts`,
   xpVIT: (v) => `+${v}% XP on Vitality workouts`,
-  questXp: (v) => `+${v}% daily quest XP`,
+  questXp: (v) => `+${v}% quest and bounty XP`,
   prXp: (v) => `+${v}% personal record XP`,
 };
 
@@ -668,10 +668,11 @@ let shop = { spent: 0, bought: 0, items: {}, ...load(SHOP_KEY, {}) };
 // Badges and gear the player has already been told about
 let seen = { badges: [], gear: [], ...load(UNLOCKS_KEY, {}) };
 // Guard against damaged saved data (e.g. edited by hand) so the app still opens
-if (!Array.isArray(workouts)) workouts = [];
-if (!Array.isArray(questAwards)) questAwards = [];
-if (!Array.isArray(feats)) feats = [];
-if (!Array.isArray(bountyAwards)) bountyAwards = [];
+const validList = (list) => (Array.isArray(list) ? list.filter((x) => x && typeof x === "object") : []);
+workouts = validList(workouts);
+questAwards = validList(questAwards);
+feats = validList(feats);
+bountyAwards = validList(bountyAwards);
 if (!settings.gear || typeof settings.gear !== "object") settings.gear = {};
 if (!shop.items || typeof shop.items !== "object") shop.items = {};
 if (!Array.isArray(seen.badges)) seen.badges = [];
@@ -908,7 +909,10 @@ function findQuest(id) {
 
 function questProgress(quest, list) {
   const relevant = list.filter(
-    (w) => (!quest.stat || activityOf(w).stat === quest.stat) && (!quest.type || w.type === quest.type)
+    (w) =>
+      (!quest.stat || activityOf(w).stat === quest.stat) &&
+      (!quest.type || w.type === quest.type) &&
+      (!quest.types || quest.types.includes(w.type))
   );
   if (quest.sessions) return { cur: relevant.length, target: quest.sessions, unit: "sessions" };
   if (quest.km) return { cur: Math.round(sumBy(relevant, "distance") * 10) / 10, target: quest.km, unit: "km" };
@@ -1517,7 +1521,7 @@ const TUTORIAL = [
   {
     target: '.tab[data-screen="train"]',
     title: "Train",
-    text: "After you exercise, log it here. Activities marked with an XP badge match your class. Challenge mode records personal bests that teach you combat skills.",
+    text: "After you exercise, log it here. Your class earns bonus XP on the activities marked with an XP badge (Warriors get a bonus on everything). Challenge mode records personal bests that teach you combat skills.",
   },
   {
     target: '.tab[data-screen="fight"]',
@@ -1883,7 +1887,7 @@ function renderChallenges() {
     ${(() => {
       const cs = combatSkillFor(settings.cls, selected);
       return cs
-        ? `<p class="combat-unlock">⚔ ${CLASSES[settings.cls].name} combat skill: <strong>${cs.icon} ${cs.name}</strong>. ${cs.desc}. Unlocks at rank I and grows stronger with each rank.</p>`
+        ? `<p class="combat-unlock">⚔ ${CLASSES[settings.cls].name} combat skill: <strong>${cs.icon} ${cs.name}</strong>. ${cs.desc}. ${cs.ultimate ? "Unlocks with your promotion" : "Unlocks at rank I"} and grows stronger with each rank.</p>`
         : "";
     })()}
     ${ch.kind === "lift" ? `<p class="hint">Lift ranks compare your estimated one-rep max to your body weight (set in Camp).</p>` : ""}`;
@@ -2061,12 +2065,17 @@ settingsForm.units.addEventListener("change", () => {
   const unchanged = Number(settingsForm.weight.value) === toDisplayWeight(settings.weight);
   const kg = unchanged ? settings.weight : fromDisplayWeight(Number(settingsForm.weight.value));
   // A lift weight already typed in the challenge form is converted too
+  // (kept exact across repeated switches, since lb are shown rounded)
   const liftBox = featForm["lift-weight"];
-  const liftKg = liftBox.value ? fromDisplayWeight(Number(liftBox.value)) : 0;
+  const liftKg = !liftBox.value ? 0 : liftBox.value === liftBox.dataset.shown ? Number(liftBox.dataset.kg) : fromDisplayWeight(Number(liftBox.value));
   settings.units = settingsForm.units.value;
   save(SETTINGS_KEY, settings);
   if (kg > 0) settingsForm.weight.value = toDisplayWeight(kg);
-  if (liftKg > 0) liftBox.value = toDisplayWeight(liftKg);
+  if (liftKg > 0) {
+    liftBox.value = toDisplayWeight(liftKg);
+    liftBox.dataset.kg = liftKg;
+    liftBox.dataset.shown = liftBox.value;
+  }
   $("weight-label").textContent = `Body weight (${settings.units})`;
   render();
 });

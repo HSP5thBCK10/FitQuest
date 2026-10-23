@@ -79,7 +79,7 @@ const CLASS_SKILLS = {
   ],
   assassin: [
     { id: "shadowstep", name: "Shadowstep", icon: "👤", challenge: "mile", cost: 40,
-      desc: "100% damage, then dodge the next attack", effect: { damage: 1, buff: { evade: 1, turns: 1 } } },
+      desc: "100% damage, then dodge the monster's attack this turn", effect: { damage: 1, buff: { evade: 1, turns: 1 } } },
     { id: "blade_flurry", name: "Blade Flurry", icon: "🌀", challenge: "fivek", cost: 40,
       desc: "4 quick hits of 50% damage", effect: { damage: 0.5, hits: 4 } },
     { id: "backstab", name: "Backstab", icon: "🗡️", challenge: "pullups", cost: 35,
@@ -115,7 +115,7 @@ const CLASS_SKILLS = {
     { id: "power_strike", name: "Power Strike", icon: "⚔️", challenge: "squat", cost: 35,
       desc: "A mighty blow for 200% damage", effect: { damage: 2 } },
     { id: "second_wind", name: "Second Wind", icon: "💚", challenge: "fivek", cost: 35,
-      desc: "Heal 20% of max HP and cure poison", effect: { heal: 0.2, cleanse: true } },
+      desc: "Heal 20% of max HP and cure poison, burns and curses", effect: { heal: 0.2, cleanse: true } },
     { id: "battle_shout", name: "Battle Shout", icon: "📣", challenge: "pushups", cost: 30,
       desc: "+30% damage and +30% armor for 3 turns", effect: { buff: { atk: 0.3, def: 0.3, turns: 3 } } },
     { id: "execute", name: "Execute", icon: "🪓", challenge: "deadlift", cost: 40,
@@ -123,7 +123,7 @@ const CLASS_SKILLS = {
     { id: "whirlwind", name: "Whirlwind", icon: "🌪️", challenge: "burpees", cost: 40,
       desc: "3 spinning hits of 60% damage", effect: { damage: 0.6, hits: 3 } },
     { id: "iron_will", name: "Iron Will", icon: "🗿", challenge: "wallsit", cost: 30,
-      desc: "Block 50% of damage for 2 turns and cure poison", effect: { buff: { block: 0.5, turns: 2 }, cleanse: true } },
+      desc: "Block 50% of damage for 2 turns and cure poison, burns and curses", effect: { buff: { block: 0.5, turns: 2 }, cleanse: true } },
   ],
   knight: [
     { id: "valiant_strike", name: "Valiant Strike", icon: "⚜️", challenge: "squat", cost: 35,
@@ -135,7 +135,7 @@ const CLASS_SKILLS = {
     { id: "lance_charge", name: "Lance Charge", icon: "🏇", challenge: "deadlift", cost: 45,
       desc: "A thundering charge for 220% damage", effect: { damage: 2.2 } },
     { id: "oath_of_iron", name: "Oath of Iron", icon: "🤞", challenge: "pushups", cost: 30,
-      desc: "+30% damage for 3 turns and cure poison", effect: { buff: { atk: 0.3, turns: 3 }, cleanse: true } },
+      desc: "+30% damage for 3 turns and cure poison, burns and curses", effect: { buff: { atk: 0.3, turns: 3 }, cleanse: true } },
     { id: "crusader_strike", name: "Crusader Strike", icon: "✝️", challenge: "deadhang", cost: 35,
       desc: "140% damage and heal 8% of max HP", effect: { damage: 1.4, heal: 0.08 } },
     { id: "steady_march", name: "Steady March", icon: "🥾", challenge: "row2k", cost: 30,
@@ -435,6 +435,7 @@ function startDungeon(index) {
   };
   battle.enemy = monsterOnFloor(dungeon, 0);
   $("b-hero-sprite").innerHTML = heroBackArt(settings.cls, settings.gear);
+  $("b-hero-sprite").classList.remove("fainted"); // left over from a lost run
   $("b-scene").className = `scene ${dungeon.id}`;
   $("b-enemy-sprite").dataset.monster = "";
   $("battle").hidden = false;
@@ -550,7 +551,7 @@ function useItem(id) {
   const e = battle.enemy;
   shop.items[id]--;
   saveShop();
-  addLog(`${heroName()} used a ${item.name}!`);
+  addLog(`${heroName()} used ${/^[AEIOU]/i.test(item.name) ? "an" : "a"} ${item.name}!`);
   if (id === "hipotion") {
     const healed = heal(0.7);
     addLog(healed ? `${heroName()} recovered ${healed} HP!` : `${heroName()}'s HP is already full!`);
@@ -604,7 +605,7 @@ function enemyStrike(mult, announce = true) {
   const dmg = Math.max(1, Math.round(mitigate(raw, battle.stats.def * (1 + buffTotal("def"))) * blocked * rand(0.9, 1.1)));
   battle.hp = Math.max(0, battle.hp - dmg);
   floatText("hero", String(dmg), mult > 1 ? "hurt heavy" : "hurt");
-  if (blocked < 1) addLog("The guard softened the blow!");
+  if (blocked < 1) addLog("The blow was softened!");
 
   if (e.ability === "drain") {
     const healed = Math.min(Math.round(dmg * 0.5), e.maxHp - e.hp);
