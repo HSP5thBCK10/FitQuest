@@ -292,7 +292,7 @@
   </nav>
 
   <!-- Class selection (shown on first launch, or from Camp) -->
-  <div class="overlay" id="class-select" hidden>
+  <div class="overlay" id="class-select" role="dialog" aria-modal="true" aria-labelledby="class-select-title" hidden>
     <div class="overlay-inner">
       <h1 class="pixel overlay-title" id="class-select-title">Choose Your Class</h1>
       <p class="overlay-sub">Your class shapes your training path and which workouts earn bonus XP.</p>
@@ -308,7 +308,7 @@
   </div>
 
   <!-- Dungeon battle (Pokémon-style) -->
-  <div class="overlay battle" id="battle" hidden>
+  <div class="overlay battle" id="battle" role="dialog" aria-modal="true" aria-label="Dungeon battle" hidden>
     <div class="battle-inner">
       <div class="battle-top pixel"><span id="b-dungeon"></span><span id="b-floor"></span></div>
 
@@ -333,14 +333,14 @@
       </div>
 
       <div class="command-area" id="b-command" data-menu="wait">
-        <div class="text-box pixel" id="b-text" role="status" aria-live="polite"></div>
+        <div class="text-box pixel" id="b-text" role="status" aria-live="polite" tabindex="0"></div>
         <div class="command-menu" id="b-actions"></div>
       </div>
     </div>
   </div>
 
   <!-- Level up / quest complete popup -->
-  <div class="overlay popup" id="popup" hidden>
+  <div class="overlay popup" id="popup" role="dialog" aria-modal="true" aria-labelledby="popup-title" hidden>
     <div class="popup-box panel">
       <div class="popup-icon" id="popup-icon"></div>
       <div class="popup-title pixel" id="popup-title"></div>

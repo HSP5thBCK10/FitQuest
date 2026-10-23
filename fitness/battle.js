@@ -415,6 +415,7 @@ function healAmount(value) {
 }
 
 function startDungeon(index) {
+  if (battle) return; // already in a run (e.g. a second tap or key press on Enter)
   const dungeon = DUNGEONS[index];
   const stats = heroCombat();
   battle = {
@@ -439,6 +440,9 @@ function startDungeon(index) {
   $("b-scene").className = `scene ${dungeon.id}`;
   $("b-enemy-sprite").dataset.monster = "";
   $("battle").hidden = false;
+  // So the phone's back button asks before leaving the run instead of closing the app
+  // (if the last run's back step is still pending, the popstate handler adds it afterwards)
+  if (!leavingBattleHistory) history.pushState({ fitquestBattle: true }, "");
   enterEnemy();
   beginTurn();
 }
@@ -828,7 +832,25 @@ function fleeBattle() {
   $("battle").hidden = true;
   Music.play("town");
   renderFight();
+  if (history.state && history.state.fitquestBattle) {
+    leavingBattleHistory = true;
+    history.back();
+  }
 }
+
+// The back button during a run: same as RUN (asks first); staying keeps the back entry
+let leavingBattleHistory = false;
+window.addEventListener("popstate", () => {
+  if (leavingBattleHistory) {
+    // Our own step back after leaving a run; a new run may have started meanwhile
+    leavingBattleHistory = false;
+    if (battle) history.pushState({ fitquestBattle: true }, "");
+    return;
+  }
+  if (!battle) return;
+  fleeBattle();
+  if (battle) history.pushState({ fitquestBattle: true }, "");
+});
 
 // ---------- Battle playback ----------
 
@@ -914,12 +936,14 @@ function vibrationFor(ev) {
 }
 
 async function playHit(ev) {
+  const current = battle;
   const target = $(ev.target === "enemy" ? "b-enemy-sprite" : "b-hero-sprite");
   const attacker = $(ev.target === "enemy" ? "b-hero-sprite" : "b-enemy-sprite");
   const isAttack = ev.cls !== "heal" && ev.cls !== "dot" && !ev.cls.includes("self");
   if (isAttack) {
     restartAnimation(attacker, ev.target === "enemy" ? "lunge-right" : "lunge-left");
     await wait(160);
+    if (battle !== current) return; // the player left mid-animation
   }
   const floater = document.createElement("span");
   floater.className = `floater pixel ${ev.cls}`;
@@ -1115,6 +1139,12 @@ document.getElementById("b-actions").addEventListener("click", (event) => {
 });
 
 // Tapping the message box skips the typing, then moves to the next message
+document.getElementById("b-text").addEventListener("keydown", (event) => {
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    event.target.click();
+  }
+});
 document.getElementById("b-text").addEventListener("click", () => {
   if (!battle) return;
   if (battle.onTap) battle.onTap();

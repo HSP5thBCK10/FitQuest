@@ -1598,6 +1598,29 @@ $("tut-next").addEventListener("click", () => {
 $("tut-skip").addEventListener("click", () => endTutorial(false));
 $("replay-tutorial-btn").addEventListener("click", startTutorial);
 window.addEventListener("resize", placeTutorial);
+window.addEventListener("scroll", () => !$("tutorial").hidden && placeTutorial(), { passive: true });
+
+// While an overlay is open, the screen behind it can't be tapped or reached with the keyboard,
+// and focus moves into the overlay
+function syncOverlays() {
+  const open = (id) => !$(id).hidden;
+  const popupOpen = open("popup");
+  const anyOpen = popupOpen || open("battle") || open("class-select") || open("tutorial");
+  document.querySelector("main").inert = anyOpen;
+  document.querySelector(".tab-bar").inert = anyOpen;
+  $("battle").inert = popupOpen;
+  $("class-select").inert = popupOpen;
+}
+for (const id of ["popup", "battle", "class-select", "tutorial"]) {
+  new MutationObserver(() => {
+    syncOverlays();
+    const el = $(id);
+    if (!el.hidden && !el.contains(document.activeElement)) {
+      const target = el.querySelector("button:not([disabled]), input, [tabindex='0']");
+      if (target) target.focus({ preventScroll: true });
+    }
+  }).observe($(id), { attributes: true, attributeFilter: ["hidden"] });
+}
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && tutorialStep >= 0) endTutorial(false);
 });
@@ -1748,8 +1771,14 @@ function updatePreview() {
 
 ["input", "change"].forEach((evt) => form.addEventListener(evt, updatePreview));
 
+// A quick second submit (double tap or double Enter) right after saving is ignored,
+// so it can't leave an error message behind on the freshly reset form
+let lastSaved = 0;
+const justSaved = () => Date.now() - lastSaved < 800;
+
 form.addEventListener("submit", (event) => {
   event.preventDefault();
+  if (justSaved()) return;
   const status = $("form-status");
   status.className = "form-status";
   const type = selectedType();
@@ -1783,6 +1812,7 @@ form.addEventListener("submit", (event) => {
     cls: settings.cls,
     xp,
   });
+  lastSaved = Date.now();
   const completed = syncQuest(form.date.value);
   const bountyDone = syncBounty(weekOf(form.date.value));
   persist();
@@ -1917,6 +1947,7 @@ function resetFeatForm() {
 
 featForm.addEventListener("submit", (event) => {
   event.preventDefault();
+  if (justSaved()) return;
   const status = $("feat-status");
   status.className = "form-status";
   const fail = (msg) => {
@@ -1963,6 +1994,7 @@ featForm.addEventListener("submit", (event) => {
   feat.xp = isPR ? Math.round(PR_XP * (1 + badgeBuffs().prXp / 100)) : 0;
 
   feats.push(feat);
+  lastSaved = Date.now();
   persist();
   const unlocks = syncUnlocks();
   render();
