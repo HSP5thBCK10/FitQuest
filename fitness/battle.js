@@ -47,7 +47,7 @@ const MONSTERS = {
 // Each dungeon has 3 floors; the boss on the last floor is one level higher
 const DUNGEONS = [
   { id: "cave", name: "Goblin Cave", icon: "🕳️", level: 1, floors: ["rat", "goblin", "goblin_king"] },
-  { id: "crypt", name: "Haunted Crypt", icon: "⚰️", level: 4, floors: ["bat", "skeleton", "lich"] },
+  { id: "crypt", name: "Haunted Crypt", icon: "⚰️", level: 5, floors: ["bat", "skeleton", "lich"] },
   { id: "forest", name: "Spider Forest", icon: "🌲", level: 8, floors: ["wolf", "spider", "treant"] },
   { id: "volcano", name: "Volcano Depths", icon: "🌋", level: 12, floors: ["imp", "golem", "drake"] },
   { id: "peak", name: "Dragon's Peak", icon: "🏔️", level: 17, floors: ["wyvern", "ogre", "dragon"] },

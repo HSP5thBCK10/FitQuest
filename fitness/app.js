@@ -446,7 +446,7 @@ const BADGES = [
   { id: "km5", icon: "👟", name: "First 5K", desc: "Cover 5 km in one workout", check: (c) => [c.maxKm, 5] },
   { id: "km10", icon: "🏅", name: "10K Club", desc: "Cover 10 km in one workout", check: (c) => [c.maxKm, 10] },
   { id: "marathon", icon: "🗺️", name: "Marathoner", desc: "Cover 42.2 km in total", check: (c) => [c.totalKm, 42.2] },
-  { id: "goal", icon: "🎯", name: "Goal Crusher", desc: "Hit your weekly goal", check: (c) => [c.bestWeek, c.goal] },
+  { id: "goal", icon: "🎯", name: "Goal Crusher", desc: "Hit your weekly goal", check: (c) => [c.goalMet ? c.goal : c.bestWeek, c.goal] },
   { id: "quests5", icon: "📜", name: "Quest Hunter", desc: "Complete 5 daily quests", check: (c) => [c.quests, 5] },
   { id: "quests25", icon: "🏆", name: "Questmaster", desc: "Complete 25 daily quests", check: (c) => [c.quests, 25] },
   { id: "allstats", icon: "🃏", name: "Jack of All Trades", desc: "Train all four attributes", check: (c) => [c.statsTrained, 4] },
@@ -745,10 +745,12 @@ function formatDay(key) {
   const yesterday = toKey(addDays(new Date(), -1));
   if (key === today) return "Today";
   if (key === yesterday) return "Yesterday";
-  return fromKey(key).toLocaleDateString(undefined, {
+  const date = fromKey(key);
+  return date.toLocaleDateString(undefined, {
     weekday: "long",
     month: "short",
     day: "numeric",
+    ...(date.getFullYear() !== new Date().getFullYear() && { year: "numeric" }),
   });
 }
 
@@ -1028,6 +1030,8 @@ function badgeContext() {
     totalKm: Math.round(sumBy(workouts, "distance") * 10) / 10,
     bestWeek: Math.max(0, ...Object.values(weeks)),
     goal: settings.goal,
+    // Once a week has hit the goal, raising the goal later doesn't take the badge away
+    goalMet: settings.goalMet,
     quests: questAwards.length,
     statsTrained: Object.values(statMinutes).filter((m) => m > 0).length,
     activityTypes: new Set(workouts.map((w) => w.type)).size,
@@ -1074,6 +1078,10 @@ function unlockText(g) {
 // Returns newly unlocked badges and gear.
 function syncUnlocks() {
   const status = badgeStatus();
+  if (!settings.goalMet && status.some((b) => b.id === "goal" && b.earned)) {
+    settings.goalMet = true;
+    save(SETTINGS_KEY, settings);
+  }
   const badges = status.filter((b) => b.earned);
   const gear = unlockedGear(status);
   const fresh = {
@@ -1352,7 +1360,7 @@ function renderJournal() {
       const quest = award && findQuest(award.id);
       return `
       <div class="history-day">
-        <h3>${formatDay(key)} · ${sumBy(byDay[key], "duration")} min${quest ? ` · ✔ ${quest.name}` : ""}</h3>
+        <h3>${formatDay(key)}${sumBy(byDay[key], "duration") ? ` · ${sumBy(byDay[key], "duration")} min` : ""}${quest ? ` · ✔ ${quest.name}` : ""}</h3>
         <div class="panel"><ul class="workout-list">${byDay[key]
           .map((item) => (item.challenge ? featItem(item) : workoutItem(item)))
           .join("")}</ul></div>
@@ -2123,7 +2131,7 @@ $("clear-btn").addEventListener("click", () => {
   shop = { spent: 0, bought: 0, items: {} };
   seen = { badges: [], gear: [] };
   // A true fresh start: pick a class again and see the tutorial (preferences like units stay)
-  settings = { ...settings, cls: null, heroName: "", gear: {}, tutorialDone: false };
+  settings = { ...settings, cls: null, heroName: "", gear: {}, tutorialDone: false, goalMet: false };
   save(SETTINGS_KEY, settings);
   save(UNLOCKS_KEY, seen);
   persist();
@@ -2152,8 +2160,10 @@ if (settings.cls && !CLASSES[settings.cls]) settings.cls = null;
 feats = feats.filter((f) => CHALLENGES[f.challenge]);
 
 // Chieftain used to be the Barbarian's first promotion; below level 20 it is now Marauder
-if (settings.cls === "chieftain" && levelInfo(totalXp()).level < PROMOTION_LEVELS[2]) {
-  settings.cls = "marauder";
+// (runs once, for old saves; later level drops don't demote anyone)
+if (!settings.promotionsV2) {
+  if (settings.cls === "chieftain" && levelInfo(totalXp()).level < PROMOTION_LEVELS[2]) settings.cls = "marauder";
+  settings.promotionsV2 = true;
   save(SETTINGS_KEY, settings);
 }
 
@@ -2173,10 +2183,18 @@ if (settings.cls) {
 // Town music starts with the first tap (browsers block audio before that)
 Music.play("town");
 
-// Re-render if the app is left open past midnight
+// Catch up when the day changes: on returning to the app, or while it stays open past midnight
+let shownDay = toKey(new Date());
+setInterval(() => {
+  if (!document.hidden && toKey(new Date()) !== shownDay) refreshDay();
+}, 30000);
 document.addEventListener("visibilitychange", () => {
-  if (document.hidden) return;
+  if (!document.hidden) refreshDay();
+});
+
+function refreshDay() {
   const today = toKey(new Date());
+  shownDay = today;
   if (form.date.max !== today) {
     if (form.date.value === form.date.max) form.date.value = today;
     if (featForm["feat-date"].value === featForm["feat-date"].max) featForm["feat-date"].value = today;
@@ -2184,7 +2202,7 @@ document.addEventListener("visibilitychange", () => {
     featForm["feat-date"].max = today;
   }
   render();
-});
+}
 
 // Offline support
 if ("serviceWorker" in navigator && location.protocol !== "file:") {

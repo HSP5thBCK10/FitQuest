@@ -118,7 +118,7 @@ battlefield backdrop:
 | Dungeon        | Rec. LV | Monsters (boss last)                      |
 | -------------- | ------- | ----------------------------------------- |
 | Goblin Cave    | 1       | Giant Rat, Goblin, Goblin King            |
-| Haunted Crypt  | 4       | Vampire Bat, Skeleton, Lich               |
+| Haunted Crypt  | 5       | Vampire Bat, Skeleton, Lich               |
 | Spider Forest  | 8       | Dire Wolf, Giant Spider, Elder Treant     |
 | Volcano Depths | 12      | Fire Imp, Lava Golem, Fire Drake          |
 | Dragon's Peak  | 17      | Wyvern, Ogre, Ancient Dragon              |
@@ -277,5 +277,5 @@ All in the `fitness/` folder (the repo's top-level `index.html` only redirects t
 | `manifest.json`    | Makes the app installable                   |
 | `icons/`, `fonts/` | App icons and the Press Start 2P pixel font (OFL) |
 
-When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v23`) so installed
+When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v24`) so installed
 copies pick up the update.
