@@ -2075,7 +2075,8 @@ settingsForm.units.addEventListener("change", () => {
   // A lift weight already typed in the challenge form is converted too
   // (kept exact across repeated switches, since lb are shown rounded)
   const liftBox = featForm["lift-weight"];
-  const liftKg = !liftBox.value ? 0 : liftBox.value === liftBox.dataset.shown ? Number(liftBox.dataset.kg) : fromDisplayWeight(Number(liftBox.value));
+  const remembered = liftBox.value === liftBox.dataset.shown && liftBox.dataset.units === settings.units;
+  const liftKg = !liftBox.value ? 0 : remembered ? Number(liftBox.dataset.kg) : fromDisplayWeight(Number(liftBox.value));
   settings.units = settingsForm.units.value;
   save(SETTINGS_KEY, settings);
   if (kg > 0) settingsForm.weight.value = toDisplayWeight(kg);
@@ -2083,6 +2084,7 @@ settingsForm.units.addEventListener("change", () => {
     liftBox.value = toDisplayWeight(liftKg);
     liftBox.dataset.kg = liftKg;
     liftBox.dataset.shown = liftBox.value;
+    liftBox.dataset.units = settings.units;
   }
   $("weight-label").textContent = `Body weight (${settings.units})`;
   render();
