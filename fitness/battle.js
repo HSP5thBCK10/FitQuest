@@ -248,7 +248,10 @@ const POTIONS_PER_RUN = 2;
 let dungeonState = null;
 
 function dungeonProgress() {
-  if (!dungeonState) dungeonState = { cleared: {}, kills: 0, ...load(DUNGEONS_KEY, {}) };
+  if (!dungeonState) {
+    dungeonState = { cleared: {}, kills: 0, ...load(DUNGEONS_KEY, {}) };
+    if (!dungeonState.cleared || typeof dungeonState.cleared !== "object") dungeonState.cleared = {};
+  }
   return dungeonState;
 }
 

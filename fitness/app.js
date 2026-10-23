@@ -667,6 +667,15 @@ let bountyAwards = load(BOUNTIES_KEY, []);
 let shop = { spent: 0, bought: 0, items: {}, ...load(SHOP_KEY, {}) };
 // Badges and gear the player has already been told about
 let seen = { badges: [], gear: [], ...load(UNLOCKS_KEY, {}) };
+// Guard against damaged saved data (e.g. edited by hand) so the app still opens
+if (!Array.isArray(workouts)) workouts = [];
+if (!Array.isArray(questAwards)) questAwards = [];
+if (!Array.isArray(feats)) feats = [];
+if (!Array.isArray(bountyAwards)) bountyAwards = [];
+if (!settings.gear || typeof settings.gear !== "object") settings.gear = {};
+if (!shop.items || typeof shop.items !== "object") shop.items = {};
+if (!Array.isArray(seen.badges)) seen.badges = [];
+if (!Array.isArray(seen.gear)) seen.gear = [];
 
 function persist() {
   save(STORAGE_KEY, workouts);
@@ -1166,7 +1175,7 @@ function renderHero() {
 
   // Daily quest
   const award = questAwards.find((a) => a.date === todayKey);
-  const quest = award ? findQuest(award.id) : questFor(todayKey, settings.cls);
+  const quest = (award && findQuest(award.id)) || questFor(todayKey, settings.cls);
   const p = questProgress(quest, todays);
   const done = p.cur >= p.target;
   $("quest-card").classList.toggle("done", done);
@@ -1181,7 +1190,7 @@ function renderHero() {
   // Weekly bounty
   const weekKey = weekOf(todayKey);
   const bountyAward = bountyAwards.find((a) => a.week === weekKey);
-  const bounty = bountyAward ? BOUNTIES.find((b) => b.id === bountyAward.id) : bountyFor(weekKey);
+  const bounty = (bountyAward && BOUNTIES.find((b) => b.id === bountyAward.id)) || bountyFor(weekKey);
   const bp = bountyProgress(bounty, weekKey);
   const bountyDone = bp.cur >= bp.target;
   const daysLeft = 7 - ((now.getDay() + 6) % 7);
@@ -1741,16 +1750,22 @@ form.addEventListener("submit", (event) => {
   const duration = Math.round(Number(form.duration.value));
   if (!duration || duration < 1 || duration > 1440) return fail("Enter a duration between 1 and 1440 minutes.");
   if (!form.date.value) return fail("Choose a date.");
+  if (form.date.value > toKey(new Date())) return fail("The date can't be in the future.");
+  if (form.date.value < "2000-01-01") return fail("Choose a date from 2000 onward.");
+  const distance = Number(form.distance.value);
+  // Up to 300 km, and no faster than 90 km/h (fast enough for any bike ride)
+  if (!(distance >= 0 && distance <= 300 && distance / duration <= 1.5)) return fail("Enter a realistic distance for that time (up to 300 km).");
+  const calories = form.calories.value ? Math.round(Number(form.calories.value)) : null;
+  if (calories !== null && !(calories >= 0 && calories <= 10000)) return fail("Calories must be between 0 and 10,000.");
 
   const levelBefore = levelInfo(totalXp()).level;
-  const distance = Number(form.distance.value);
   const xp = workoutXp(type, duration, settings.cls);
   workouts.push({
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     type,
     duration,
     distance: distance > 0 ? Math.round(distance * 100) / 100 : null,
-    calories: form.calories.value ? Math.round(Number(form.calories.value)) : estimateCalories(type, duration),
+    calories: calories ?? estimateCalories(type, duration),
     date: form.date.value,
     notes: form.notes.value.trim(),
     cls: settings.cls,
@@ -1902,6 +1917,8 @@ featForm.addEventListener("submit", (event) => {
   if (!ch) return fail("Choose a challenge.");
   const date = featForm["feat-date"].value;
   if (!date) return fail("Choose a date.");
+  if (date > toKey(new Date())) return fail("The date can't be in the future.");
+  if (date < "2000-01-01") return fail("Choose a date from 2000 onward.");
 
   const feat = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), challenge: chId, date, bw: settings.weight };
   if (ch.kind === "lift") {
@@ -1917,9 +1934,12 @@ featForm.addEventListener("submit", (event) => {
     if (!(reps >= 1 && reps <= 1000)) return fail("Enter how many reps you did.");
     feat.value = reps;
   } else {
-    const seconds = Math.round(Number(featForm["time-min"].value || 0) * 60 + Number(featForm["time-sec"].value || 0));
+    const min = Number(featForm["time-min"].value || 0);
+    const sec = Number(featForm["time-sec"].value || 0);
+    if (!(min >= 0 && sec >= 0)) return fail("Times can't be negative.");
+    if (sec >= 60) return fail("Seconds must be under 60.");
+    const seconds = Math.round(min * 60 + sec);
     if (!(seconds > 0 && seconds < 24 * 3600)) return fail("Enter a time.");
-    if (Number(featForm["time-sec"].value) >= 60) return fail("Seconds must be under 60.");
     feat.value = seconds;
   }
 
@@ -2107,6 +2127,10 @@ for (const w of workouts) {
   }
 }
 if (migrated) persist();
+
+// A class or challenge that no longer exists: pick a class again / drop the record
+if (settings.cls && !CLASSES[settings.cls]) settings.cls = null;
+feats = feats.filter((f) => CHALLENGES[f.challenge]);
 
 // Chieftain used to be the Barbarian's first promotion; below level 20 it is now Marauder
 if (settings.cls === "chieftain" && levelInfo(totalXp()).level < PROMOTION_LEVELS[2]) {
