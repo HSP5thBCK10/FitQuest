@@ -275,5 +275,5 @@ All in the `fitness/` folder (the repo's top-level `index.html` only redirects t
 | `manifest.json`    | Makes the app installable                   |
 | `icons/`, `fonts/` | App icons and the Press Start 2P pixel font (OFL) |
 
-When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v21`) so installed
+When you change app files, bump `CACHE` in `sw.js` (e.g. `fitquest-v22`) so installed
 copies pick up the update.

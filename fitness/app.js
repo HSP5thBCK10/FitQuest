@@ -2060,9 +2060,13 @@ settingsForm.units.addEventListener("change", () => {
   // rounded number (converting 154 lb back gives 69.9 kg, not the saved 70)
   const unchanged = Number(settingsForm.weight.value) === toDisplayWeight(settings.weight);
   const kg = unchanged ? settings.weight : fromDisplayWeight(Number(settingsForm.weight.value));
+  // A lift weight already typed in the challenge form is converted too
+  const liftBox = featForm["lift-weight"];
+  const liftKg = liftBox.value ? fromDisplayWeight(Number(liftBox.value)) : 0;
   settings.units = settingsForm.units.value;
   save(SETTINGS_KEY, settings);
   if (kg > 0) settingsForm.weight.value = toDisplayWeight(kg);
+  if (liftKg > 0) liftBox.value = toDisplayWeight(liftKg);
   $("weight-label").textContent = `Body weight (${settings.units})`;
   render();
 });
@@ -2108,11 +2112,17 @@ $("clear-btn").addEventListener("click", () => {
   bountyAwards = [];
   feats = [];
   shop = { spent: 0, bought: 0, items: {} };
+  seen = { badges: [], gear: [] };
+  // A true fresh start: pick a class again and see the tutorial (preferences like units stay)
+  settings = { ...settings, cls: null, heroName: "", gear: {}, tutorialDone: false };
+  save(SETTINGS_KEY, settings);
+  save(UNLOCKS_KEY, seen);
   persist();
   saveShop();
   resetDungeons();
-  syncUnlocks();
-  render();
+  showScreen("hero");
+  applyTheme();
+  openClassPicker(false);
 });
 
 // ---------- Start ----------

@@ -934,7 +934,9 @@ async function playHit(ev) {
 }
 
 async function playFaint(side) {
-  restartAnimation($(side === "enemy" ? "b-enemy-sprite" : "b-hero-sprite"), "fainted");
+  const sprite = $(side === "enemy" ? "b-enemy-sprite" : "b-hero-sprite");
+  sprite.classList.remove("enter"); // its animation would otherwise override the faint
+  restartAnimation(sprite, "fainted");
   buzz(side === "enemy" ? "enemyFaint" : "heroFaint");
   await wait(600);
 }
@@ -1001,10 +1003,13 @@ function renderBattle() {
   $("b-enemy-name").textContent = `${e.boss ? "👑" : ""}${e.name}`;
   $("b-enemy-level").textContent = `Lv${e.level}`;
   const enemyStatus = [];
-  if (e.windup) enemyStatus.push(["warn", "CHARGING"]);
-  if (e.stun) enemyStatus.push(["stn", "STN"]);
-  if (e.enraged) enemyStatus.push(["rage", "RAGE"]);
-  if (e.dot) enemyStatus.push(["psn", "PSN"]);
+  // A defeated monster shows no status
+  if (e.hp > 0) {
+    if (e.windup) enemyStatus.push(["warn", "CHARGING"]);
+    if (e.stun) enemyStatus.push(["stn", "STN"]);
+    if (e.enraged) enemyStatus.push(["rage", "RAGE"]);
+    if (e.dot) enemyStatus.push(["psn", "PSN"]);
+  }
   $("b-enemy-status").innerHTML = chips(enemyStatus);
 
   $("b-hero-name").textContent = heroName();
